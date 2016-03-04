@@ -1,5 +1,5 @@
 require 'rubygems'
-require 'HTTParty'
+require 'httparty'
 require 'bundler/setup'
 
 MY_STOP = "901280"
