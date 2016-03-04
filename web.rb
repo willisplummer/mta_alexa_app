@@ -7,6 +7,6 @@ require 'alexa_rubykit'
 #   content_type('application/json')
 # end
 
-post '/' do
+get '/' do
   "hello world"
 end
