@@ -9,7 +9,7 @@ before do
 end
 
 get '/' do
-  "hello world"
+  GetBusTimes.perform(stop_id: "901280")
 end
 
 post '/' do
