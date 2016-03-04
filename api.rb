@@ -6,7 +6,6 @@ MY_STOP = "901280"
 MTA_API_KEY = ENV['MTA_API_KEY']
 BUSTIME_API_KEY = ENV['BUSTIME_API_KEY']
 
-
 class GetBusTimes
   include HTTParty
   base_uri 'http://bustime.mta.info/api'
@@ -23,7 +22,7 @@ class GetBusTimes
 
   def perform
     puts "the g is okay" if g_ok?
-    get_bus_times
+    print_bus_times(get_bus_times)
   end
 
   def g_ok?
@@ -31,10 +30,10 @@ class GetBusTimes
   end
 
   def print_bus_times(times)
-    "Buses are arriving at:"
+    print "Buses are arriving at:"
     times.each do |v|
       t = Time.parse(v.to_s)
-      t.strftime('%I:%M %p')
+      print " #{t.strftime('%I:%M %p')},"
     end
   end
 
@@ -44,7 +43,6 @@ class GetBusTimes
     array_of_buses = data_hash["Siri"]["ServiceDelivery"]["StopMonitoringDelivery"][0]["MonitoredStopVisit"]
     arriving_bus_times = []
     array_of_buses.each {|v| arriving_bus_times << v["MonitoredVehicleJourney"]["MonitoredCall"]["ExpectedArrivalTime"]}
-    print arriving_bus_times
-    print_bus_times(arriving_bus_times)
+    arriving_bus_times
   end
 end
