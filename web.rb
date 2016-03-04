@@ -39,7 +39,7 @@ post '/' do
 
   # Response
   # If it's a launch request
-  if (request.type == 'LaunchRequest')
+  if (request.type == 'LAUNCH_REQUEST')
     # Process your Launch Request
     # Call your methods for your application here that process your Launch Request.
     response.add_speech('Ruby running ready!')
