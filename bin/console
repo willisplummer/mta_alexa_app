@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby
+require "bundler"
+require "irb"
+require "httparty"
+require "json"
+require_relative "../api.rb"
+
+IRB.start
