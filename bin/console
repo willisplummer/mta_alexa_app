@@ -3,6 +3,6 @@ require "bundler"
 require "irb"
 require "httparty"
 require "json"
-require_relative "../api.rb"
+require_relative "../web.rb"
 
 IRB.start

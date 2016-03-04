@@ -48,5 +48,3 @@ class GetBusTimes
     print_bus_times(arriving_bus_times)
   end
 end
-
-GetBusTimes.perform

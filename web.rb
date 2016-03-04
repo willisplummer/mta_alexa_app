@@ -1,8 +1,11 @@
-require 'sinatra'
-require 'json'
+require 'rubygems'
 require 'bundler/setup'
-require 'alexa_rubykit'
-require 'api.rb'
+require 'dotenv'
+require 'sinatra'
+Dotenv.load
+
+require './api.rb'
+
 
 before do
   content_type('application/json')
