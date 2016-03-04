@@ -3,6 +3,9 @@ require 'HTTParty'
 require 'bundler/setup'
 
 MY_STOP = "901280"
+MTA_API_KEY = ENV['MTA_API_KEY']
+BUSTIME_API_KEY = ENV['BUSTIME_API_KEY']
+
 
 class GetBusTimes
   include HTTParty
