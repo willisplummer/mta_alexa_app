@@ -31,7 +31,7 @@ class GetBusTimes
   end
 
   def print_bus_times(times)
-    puts "Buses are arriving at:"
+    "Buses are arriving at:"
     times.each do |v|
       t = Time.parse(v.to_s)
       t.strftime('%I:%M %p')
