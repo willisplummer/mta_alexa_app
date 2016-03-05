@@ -29,8 +29,8 @@ class GetBusTimes
 
   def format_times(array)
     puts array
-    return [] if array == []
     values = array.inject([]) do |memo, v|
+      next if v.nil?
       time = Time.parse(v)
       memo << time.strftime("%l:%M%p") if time > Time.now + time_to_stop
       memo
