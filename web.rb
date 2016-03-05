@@ -3,6 +3,7 @@ require 'bundler/setup'
 require 'dotenv'
 require 'sinatra'
 require 'alexa_rubykit'
+require 'time'
 Dotenv.load
 
 require './behaviors/GetBusTimes.rb'
@@ -42,11 +43,9 @@ post '/' do
   if (request.type == 'LAUNCH_REQUEST')
     # Process your Launch Request
     # Call your methods for your application here that process your Launch Request.
-    times = GetBusTimes.perform(stop_id: "901280")
-    times.last.insert(0, "and ")
-    times = times.join(", ")
-    string = "Buses are arriving at #{times}."
-    response.add_speech("It's lit. " + string)
+    time_string = "The time is #{Time.now.strftime("%l:%M%p")}"
+    bus_string = GetBusTimes.perform(stop_id: "901280", time_to_stop: 360)
+    response.add_speech("It's lit. " + bus_string)
     response.add_hash_card( { :title => 'Nextbus Running', :subtitle => 'It is truly lit' } )
   end
 
