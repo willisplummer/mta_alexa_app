@@ -5,7 +5,7 @@ require 'sinatra'
 require 'alexa_rubykit'
 Dotenv.load
 
-require './api.rb'
+require './behaviors/GetBusTimes.rb'
 
 before do
   content_type('application/json')
@@ -42,7 +42,11 @@ post '/' do
   if (request.type == 'LAUNCH_REQUEST')
     # Process your Launch Request
     # Call your methods for your application here that process your Launch Request.
-    response.add_speech('It is lit')
+    times = GetBusTimes.perform(stop_id: "901280")
+    times.last.insert(0, "and ")
+    times = times.join(", ")
+    string = "Buses are arriving at #{times}."
+    response.add_speech('It is lit' + string)
     response.add_hash_card( { :title => 'Nextbus Running', :subtitle => 'It is truly lit' } )
   end
 
