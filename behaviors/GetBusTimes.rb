@@ -27,6 +27,7 @@ class GetBusTimes
   end
 
   def format_times(array)
+    break if array == []
     values = array.inject([]) do |memo, v|
       time = Time.parse(v)
       memo << time.strftime("%l:%M%p") if time > Time.now + time_to_stop
@@ -40,7 +41,6 @@ class GetBusTimes
     data_hash = JSON.parse(response, quirks_mode: true)
     array_of_buses = data_hash["Siri"]["ServiceDelivery"]["StopMonitoringDelivery"][0]["MonitoredStopVisit"]
     arriving_bus_times = array_of_buses.inject([]) {|memo, v| memo << v["MonitoredVehicleJourney"]["MonitoredCall"]["ExpectedArrivalTime"]; memo}
-    puts arriving_bus_times
     return arriving_bus_times
   end
 end

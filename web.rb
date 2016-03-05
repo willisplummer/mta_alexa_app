@@ -45,7 +45,7 @@ post '/' do
     # Call your methods for your application here that process your Launch Request.
     time_string = "The time is #{Time.now.strftime("%l:%M%p")}"
     bus_string = GetBusTimes.perform(stop_id: "901280", time_to_stop: 360)
-    response.add_speech("It's lit. " + bus_string)
+    response.add_speech("It's lit. " + time_string + bus_string)
     response.add_hash_card( { :title => 'Nextbus Running', :subtitle => 'It is truly lit' } )
   end
 
