@@ -46,7 +46,7 @@ post '/' do
     times.last.insert(0, "and ")
     times = times.join(", ")
     string = "Buses are arriving at #{times}."
-    response.add_speech('It is lit' + string)
+    response.add_speech("It's lit. " + string)
     response.add_hash_card( { :title => 'Nextbus Running', :subtitle => 'It is truly lit' } )
   end
 
