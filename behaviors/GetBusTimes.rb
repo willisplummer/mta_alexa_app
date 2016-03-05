@@ -21,13 +21,14 @@ class GetBusTimes
 
   def perform
     times = format_times(get_bus_times)
+    return "No buses found" if times == []
     times.last.insert(0, "and ")
     times = times.join(", ")
     return "Buses are arriving at #{times}."
   end
 
   def format_times(array)
-    break if array == []
+    return [] if array == []
     values = array.inject([]) do |memo, v|
       time = Time.parse(v)
       memo << time.strftime("%l:%M%p") if time > Time.now + time_to_stop
