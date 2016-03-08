@@ -36,7 +36,7 @@ post '/' do
   p uid
   user = User.find_by(alexa_user_id: uid) || User.create(alexa_user_id: uid)
   p user.id
-  p user.stops
+
   # We need a response object to respond to the Alexa.
   response = AlexaRubykit::Response.new
 
