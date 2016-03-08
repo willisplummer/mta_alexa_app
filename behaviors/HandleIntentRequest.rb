@@ -1,14 +1,11 @@
 class HandleIntentRequest
-  def self.perform(request)
+  def self.perform(user, request)
     case request.name
     when "Nextbus"
-      case request.slots["Bus"]["value"].upcase.delete(" ")
-      when "B44SBS"
-        GetBusTimes.perform(stop_id: "901280", time_to_stop: 360)
-      when "B45"
-        GetBusTimes.perform(stop_id: "303567", time_to_stop: 360)
-      when "B44"
-        GetBusTimes.perform(stop_id: "303404", time_to_stop: 360)
+      bus_name = request.slots["Bus"]["value"].upcase.delete(" ")
+      p "bus name: #{bus_name}"
+      if stop = user.stops.find(name: bus_name)
+        GetBusTimes.perform(stop_id: stop.mta_stop_id, time_to_stop: stop.time_to_stop)
       else
         "Error: I don't know that bus"
       end

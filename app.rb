@@ -7,6 +7,7 @@ Dotenv.load
 
 require './config/environments.rb'
 require './models/user.rb'
+require './models/stop.rb'
 require './behaviors/GetBusTimes.rb'
 require './behaviors/HandleIntentRequest.rb'
 
@@ -27,15 +28,9 @@ post '/' do
   # We can capture Session details inside of request.
   # See session object for more information.
   session = request.session
-  p session.new?
-  p session.has_attributes?
-  p session.session_id
-  p session.user_defined?
-  p session.user
   uid = session.user["userId"]
-  p uid
   user = User.find_by(alexa_user_id: uid) || User.create(alexa_user_id: uid)
-  p user.id
+  p "user id: #{user.id}"
 
   # We need a response object to respond to the Alexa.
   response = AlexaRubykit::Response.new
@@ -53,8 +48,8 @@ post '/' do
 
   if (request.type == 'INTENT_REQUEST')
     # Process your Intent Request
-    p request.slots
-    response_string = HandleIntentRequest.perform(request)
+    p "request slots: #{request.slots}"
+    response_string = HandleIntentRequest.perform(user, request)
     response.add_speech(time_string + response_string)
     response.add_hash_card( { :title => 'Ruby Intent', :subtitle => "Intent #{request.name}" } )
   end

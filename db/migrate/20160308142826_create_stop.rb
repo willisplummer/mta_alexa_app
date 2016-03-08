@@ -4,6 +4,7 @@ class CreateStop < ActiveRecord::Migration
       t.string :name
       t.integer :mta_stop_id
       t.integer :time_to_stop
+      t.integer :user_id
     end
   end
 

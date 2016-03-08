@@ -20,6 +20,7 @@ ActiveRecord::Schema.define(version: 20160308142826) do
     t.string  "name"
     t.integer "mta_stop_id"
     t.integer "time_to_stop"
+    t.integer "user_id"
   end
 
   create_table "users", force: :cascade do |t|
