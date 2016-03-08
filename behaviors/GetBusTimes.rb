@@ -1,8 +1,3 @@
-require 'rubygems'
-require 'httparty'
-require 'time'
-require 'bundler/setup'
-
 class GetBusTimes
   include HTTParty
   base_uri 'http://bustime.mta.info/api'

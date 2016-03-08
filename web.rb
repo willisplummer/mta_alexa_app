@@ -1,9 +1,7 @@
 require 'rubygems'
 require 'bundler/setup'
-require 'dotenv'
-require 'sinatra'
-require 'alexa_rubykit'
-require 'time'
+Bundler.require(:default)
+
 Dotenv.load
 
 require './behaviors/GetBusTimes.rb'
@@ -14,7 +12,7 @@ before do
 end
 
 get '/' do
-  GetBusTimes.perform(stop_id: "901280")
+  "alexa mta app"
 end
 
 post '/' do
@@ -33,14 +31,6 @@ post '/' do
 
   # We need a response object to respond to the Alexa.
   response = AlexaRubykit::Response.new
-
-  # We can manipulate the request object.
-  #
-  #p "#{request.to_s}"
-  #p "#{request.request_id}"
-
-  # Response
-  # If it's a launch request
 
   time = Time.now
   time_string = "The time is now #{time.strftime("%l:%M%p")}. "
