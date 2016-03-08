@@ -9,6 +9,8 @@ class HandleIntentRequest
         GetBusTimes.perform(stop_id: "303567", time_to_stop: 360)
       when "B44"
         GetBusTimes.perform(stop_id: "303404", time_to_stop: 360)
+      else
+        "Error: I don't know that bus"
       end
     end
   end
