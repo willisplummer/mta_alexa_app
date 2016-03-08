@@ -23,7 +23,7 @@ ActiveRecord::Schema.define(version: 20160308142826) do
   end
 
   create_table "users", force: :cascade do |t|
-    t.string "userID"
+    t.string "alexa_user_id"
   end
 
 end

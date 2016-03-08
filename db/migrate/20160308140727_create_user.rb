@@ -1,7 +1,7 @@
 class CreateUser < ActiveRecord::Migration
   def up
     create_table :users do |t|
-      t.string :user_id
+      t.string :alexa_user_id
     end
   end
 
