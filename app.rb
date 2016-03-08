@@ -32,8 +32,9 @@ post '/' do
   p session.session_id
   p session.user_defined?
   p session.user
-  p session.user.user_id
-  user = User.find_by(user_id: user.user_id.to_i) || User.create(user_id: user.user_id.to_i)
+  uid = session.user["userId"]
+  p uid
+  user = User.find_by(user_id: uid) || User.create(user_id: uid)
 
   # We need a response object to respond to the Alexa.
   response = AlexaRubykit::Response.new
