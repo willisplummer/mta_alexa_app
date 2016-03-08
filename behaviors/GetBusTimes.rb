@@ -9,7 +9,7 @@ class GetBusTimes
 
   BUSTIME_API_KEY = ENV['BUSTIME_API_KEY']
 
-  attr_accessor :name, :time_to_stop, :stop_id, :destination, :arrival_time
+  attr_accessor :time_to_stop, :stop_id
 
   def initialize(attributes = {})
     attributes.each { |k, v| send("#{k}=", v) }

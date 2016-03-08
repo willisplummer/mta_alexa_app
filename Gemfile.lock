@@ -28,6 +28,7 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.4.0)
     rspec-support (3.4.1)
+    ruby-protocol-buffers (1.6.1)
     sinatra (1.4.7)
       rack (~> 1.5)
       rack-protection (~> 1.4)
@@ -43,6 +44,7 @@ DEPENDENCIES
   httparty
   json
   rspec
+  ruby-protocol-buffers
   sinatra
 
 BUNDLED WITH

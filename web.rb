@@ -54,7 +54,6 @@ post '/' do
     # Process your Intent Request
     p "#{request.slots}"
     p "#{request.name}"
-    p "#{request.add_slots(request.slots)}"
     # HandleRequest.perform(request)
     response.add_speech("I received an intent named #{request.name}")
     response.add_hash_card( { :title => 'Ruby Intent', :subtitle => "Intent #{request.name}" } )
