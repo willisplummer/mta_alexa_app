@@ -31,6 +31,9 @@ post '/' do
   p session.has_attributes?
   p session.session_id
   p session.user_defined?
+  p session.user
+  p session.user.user_id
+  user = User.find_by(user_id: user.user_id.to_i) || User.create(user_id: user.user_id.to_i)
 
   # We need a response object to respond to the Alexa.
   response = AlexaRubykit::Response.new
