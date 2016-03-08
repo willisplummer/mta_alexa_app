@@ -22,7 +22,7 @@ class GetBusTimes
   def perform
     times = format_times(get_bus_times)
     return "No buses found" if times == []
-    times.last.insert(0, "and ")
+    times.last.insert(0, "and ") if times.count > 1
     times = times.join(", ")
     return "Buses are arriving at #{times}."
   end
