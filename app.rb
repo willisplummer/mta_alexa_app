@@ -11,6 +11,10 @@ require './models/stop.rb'
 require './behaviors/GetBusTimes.rb'
 require './behaviors/HandleIntentRequest.rb'
 
+["lib", "models", "behaviors", "config"].each do |dir|
+  Dir.glob(File.expand_path("./#{dir}/*.rb")).each {|file| require file }
+end
+
 before do
   content_type('application/json')
 end
@@ -49,8 +53,8 @@ post '/' do
   if (request.type == 'INTENT_REQUEST')
     # Process your Intent Request
     p "request slots: #{request.slots}"
-    response_string = HandleIntentRequest.perform(user, request)
-    response.add_speech(time_string + response_string)
+    response_string = HandleIntentRequest.perform(user, request, response)
+    response.add_speech(response_string)
     response.add_hash_card( { :title => 'Ruby Intent', :subtitle => "Intent #{request.name}" } )
   end
 
