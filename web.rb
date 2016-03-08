@@ -41,11 +41,13 @@ post '/' do
 
   # Response
   # If it's a launch request
+
+  time = Time.now
+  time_string = "The time is now #{time.strftime("%l:%M%p")}. "
+
   if (request.type == 'LAUNCH_REQUEST')
     # Process your Launch Request
     # Call your methods for your application here that process your Launch Request.
-    time = Time.now
-    time_string = "The time is now #{time.strftime("%l:%M%p")}. "
     bus_string = GetBusTimes.perform(stop_id: "901280", time_to_stop: 360)
     response.add_speech("It's lit. " + time_string + bus_string)
     response.add_hash_card( { :title => 'Nextbus Running', :subtitle => 'It is truly lit' } )
@@ -54,8 +56,8 @@ post '/' do
   if (request.type == 'INTENT_REQUEST')
     # Process your Intent Request
     p request.slots
-    HandleIntentRequest.perform(request)
-    response.add_speech("I received an intent named #{request.name}")
+    response_string = HandleIntentRequest.perform(request)
+    response.add_speech(time_string + response_string)
     response.add_hash_card( { :title => 'Ruby Intent', :subtitle => "Intent #{request.name}" } )
   end
 
