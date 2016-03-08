@@ -7,6 +7,7 @@ require 'time'
 Dotenv.load
 
 require './behaviors/GetBusTimes.rb'
+require './behaviors/HandleIntentRequest.rb'
 
 before do
   content_type('application/json')
@@ -52,9 +53,7 @@ post '/' do
 
   if (request.type == 'INTENT_REQUEST')
     # Process your Intent Request
-    p "#{request.slots}"
-    p "#{request.name}"
-    # HandleRequest.perform(request)
+    HandleIntentRequest.perform(request)
     response.add_speech("I received an intent named #{request.name}")
     response.add_hash_card( { :title => 'Ruby Intent', :subtitle => "Intent #{request.name}" } )
   end
