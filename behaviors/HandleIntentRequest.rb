@@ -13,7 +13,9 @@ class HandleIntentRequest
     when "Newstop"
       bus_name = request.slots["Bus"]["value"].upcase.delete(" ")
       stop_id = request.slots["StopID"]["value"].delete(" ")
-      AddNewBus.perform(user: user, name: bus_name, mta_stop_id: stop_id, response: response)
+      AddNewBus.perform(user: user, name: bus_name, mta_stop_id: stop_id)
+    else
+      "Unrecognized request"
     end
   end
 end

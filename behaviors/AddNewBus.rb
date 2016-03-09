@@ -10,7 +10,8 @@ class AddNewBus
   end
 
   def perform
-    user.stops.create(name: name, mta_stop_id: mta_stop_id, time_to_stop: 360)
-    response.add_speech("Added new bus stop named #{name}")
+    new_stop = user.stops.create(name: name, mta_stop_id: mta_stop_id, time_to_stop: 360)
+    p new_stop
+    "Added new stop"
   end
 end
