@@ -3,7 +3,7 @@ class HandleIntentRequest
   def self.perform(user, request, response)
     case request.name
     when "Nextbus"
-      bus_name = request.slots["Bus"]["value"].upcase.delete(" ")
+      bus_name = request.slots["Bus"]["value"].upcase.delete(" ").delete(".")
       p "bus name: #{bus_name}"
       if stop = user.stops.find_by(name: bus_name)
         GetBusTimes.perform(stop_id: stop.mta_stop_id, time_to_stop: stop.time_to_stop)
