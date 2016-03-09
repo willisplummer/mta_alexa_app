@@ -52,6 +52,7 @@ post '/' do
 
   if (request.type == 'INTENT_REQUEST')
     # Process your Intent Request
+    p request
     p "request slots: #{request.slots}"
     response_string = HandleIntentRequest.perform(user, request, response)
     response.add_speech(response_string)
