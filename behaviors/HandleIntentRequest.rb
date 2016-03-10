@@ -11,7 +11,7 @@ class HandleIntentRequest
         "Error: I don't know that bus"
       end
     when "Newbus"
-      bus_name = request.slots["Bus"]["value"].upcase.delete(" ")
+      bus_name = request.slots["Bus"]["value"].upcase.delete(" ").delete(".")
       stop_id = request.slots["StopID"]["value"].delete(" ")
       AddNewBus.perform(user: user, name: bus_name, mta_stop_id: stop_id)
     else
