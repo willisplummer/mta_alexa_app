@@ -18,14 +18,26 @@ GEM
       bundler (~> 1.7)
       rake (~> 10.0)
     arel (6.0.3)
+    axiom-types (0.1.1)
+      descendants_tracker (~> 0.0.4)
+      ice_nine (~> 0.11.0)
+      thread_safe (~> 0.3, >= 0.3.1)
     bacon (1.2.0)
     builder (3.2.2)
+    coercible (1.0.0)
+      descendants_tracker (~> 0.0.1)
+    descendants_tracker (0.0.4)
+      thread_safe (~> 0.3, >= 0.3.1)
     diff-lcs (1.2.5)
     dotenv (2.1.0)
+    equalizer (0.0.11)
+    gtfs-orm (0.0.1)
+      virtus (~> 1.0.1)
     httparty (0.13.7)
       json (~> 1.8)
       multi_xml (>= 0.5.2)
     i18n (0.7.0)
+    ice_nine (0.11.2)
     json (1.8.3)
     minitest (5.8.4)
     multi_xml (0.5.5)
@@ -64,6 +76,11 @@ GEM
     tilt (2.0.2)
     tzinfo (1.2.2)
       thread_safe (~> 0.1)
+    virtus (1.0.5)
+      axiom-types (~> 0.1)
+      coercible (~> 1.0)
+      descendants_tracker (~> 0.0, >= 0.0.3)
+      equalizer (~> 0.0, >= 0.0.9)
 
 PLATFORMS
   ruby
@@ -72,6 +89,7 @@ DEPENDENCIES
   activerecord
   alexa_rubykit
   dotenv
+  gtfs-orm
   httparty
   json
   pg

@@ -14,4 +14,9 @@ class AddNewBus
     p new_stop
     "Added new stop"
   end
+
+  def find_stop_in_gtfs
+    stop = GTFS::ORM::Stop.where(stop_id: mta_stop_id.to_s).first
+    stop.nil? ? "error stop does not exist" : stop.stop_name
+  end
 end

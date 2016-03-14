@@ -11,3 +11,4 @@ gem 'sinatra-activerecord'
 gem 'ruby-protocol-buffers'
 gem 'pg'
 gem 'sinatra-sequel'
+gem "gtfs-orm", require: "gtfs/orm"
