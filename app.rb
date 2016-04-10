@@ -4,7 +4,6 @@ Bundler.require(:default)
 
 Dotenv.load
 
-
 require './config/environments.rb'
 require './models/user.rb'
 require './models/stop.rb'
@@ -15,15 +14,22 @@ require './behaviors/HandleIntentRequest.rb'
   Dir.glob(File.expand_path("./#{dir}/*.rb")).each {|file| require file }
 end
 
-before do
-  content_type('application/json')
-end
-
 get '/' do
   "alexa mta app"
 end
 
+get '/signup' do
+  haml :signup
+end
+
+post '/signup' do
+  field = params[:name]
+  "got it. your name is #{field}"
+end
+
 post '/' do
+  content_type('application/json')
+
   # Check that it's a valid Alexa request
   request_json = JSON.parse(request.body.read.to_s)
   # Creates a new Request object with the request parameter.

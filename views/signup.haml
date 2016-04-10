@@ -1,0 +1,20 @@
+%h1 Welcome
+%p Welcome to my website made with Sinatra and HAML
+
+%form{action: "signup", method: "post", id:"signupform", onsubmit: "return validateForm(this)"}
+  %fieldset
+    %ol
+      %li
+        %label{for: "name"} Name:
+        %input{type: "text", name: "name", value: "", class: "text"}
+    %input{type: "submit", name: "submit", value: "Submit"}
+
+%p{id:"errors"}
+
+:javascript
+  function validateForm(form) {
+    var valid = form.name.value != "testname"
+    document.getElementById("errors").innerHTML = valid;
+    return valid;
+  }
+

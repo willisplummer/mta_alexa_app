@@ -33,6 +33,8 @@ GEM
     equalizer (0.0.11)
     gtfs-orm (0.0.1)
       virtus (~> 1.0.1)
+    haml (4.0.7)
+      tilt
     httparty (0.13.7)
       json (~> 1.8)
       multi_xml (>= 0.5.2)
@@ -90,6 +92,7 @@ DEPENDENCIES
   alexa_rubykit
   dotenv
   gtfs-orm
+  haml
   httparty
   json
   pg
