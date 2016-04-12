@@ -23,8 +23,15 @@ get '/signup' do
 end
 
 post '/signup' do
-  field = params[:name]
-  "got it. your name is #{field}"
+  name = params[:username]
+  pw1 = params[:pw1]
+  pw2 = params[:pw2]
+  if false
+    User.new(alexa_user_id: params[:username])
+    print "got it. your name is #{name} and your password is #{pw}"
+  else
+    haml :signup, locals: {username: name, pw1: pw1, pw2: pw2, errors: "no good"}
+  end
 end
 
 post '/' do

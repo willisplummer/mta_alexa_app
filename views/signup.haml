@@ -1,20 +1,80 @@
 %h1 Welcome
-%p Welcome to my website made with Sinatra and HAML
+%p Welcome to my shitty form
 
 %form{action: "signup", method: "post", id:"signupform", onsubmit: "return validateForm(this)"}
   %fieldset
     %ol
       %li
-        %label{for: "name"} Name:
-        %input{type: "text", name: "name", value: "", class: "text"}
+        %label{for: "username"} Username:
+        %input{type: "text", name: "username", value: locals[:username] ? locals[:username] : "", class: "text"}
+      %li
+        %label{for: "pw1"} Password:
+        %input{type: "text", name: "pw1", value: locals[:pw1] ? locals[:pw1] : "", class: "text"}
+      %li
+        %label{for: "pw2"} Re-enter your password:
+        %input{type: "text", name: "pw2", value: locals[:pw2] ? locals[:pw2] : "", class: "text"}
     %input{type: "submit", name: "submit", value: "Submit"}
 
 %p{id:"errors"}
+  %ul{id:"errorslist"}
+    = locals[:errors] if locals[:errors]
 
 :javascript
   function validateForm(form) {
-    var valid = form.name.value != "testname"
-    document.getElementById("errors").innerHTML = valid;
-    return valid;
+    var errors = [];
+    errors.push(validatePWLength(form));
+    errors.push(validatePWMatch(form));
+    errors.push(validateUsername(form));
+    var filteredErrors = errors.filter(notNull);
+    if (filteredErrors.length > 0) {
+      printErrors(filteredErrors)
+      return false;
+    }
+    else {
+      return true;
+    }
+  };
+
+  function printErrors(errors) {
+    var arrayLength = errors.length;
+    var htmlErrorsList = ""
+    for (var i = 0; i < arrayLength; i++) {
+      htmlErrorsList += '<li>' + errors[i] + '</li><br>';
+    }
+    document.getElementById("errorslist").innerHTML = htmlErrorsList;
   }
 
+  function notNull(error) {
+    if (error != null) {
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
+
+  function validatePWLength(form) {
+    var length = form.pw1.value.length;
+    if (6 <= length && length<= 20) {
+      return;
+    }
+    else {
+      return "Password must be more than 6 characters";
+    }
+  }
+
+  function validatePWMatch(form) {
+    if (form.pw1.value != form.pw2.value) {
+      return "Passwords entered don't match";
+    }
+  }
+
+  function validateUsername(form) {
+    var length = form.username.value.length;
+    if (4 <= length && length<= 20) {
+      return;
+    }
+    else {
+      return "Username must be between four and twenty characters";
+    }
+  }
