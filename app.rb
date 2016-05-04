@@ -99,7 +99,7 @@ post '/' do
   time = Time.now
   time_string = "The time is now #{time.strftime("%l:%M%p")}. "
 
-  if (request.type == 'LAUNCH_REQUEST' && user_id)
+  if (request.type == 'LAUNCH_REQUEST' && !user_id.nil?)
     # Process your Launch Request
     # Call your methods for your application here that process your Launch Request.
     bus_string = GetBusTimes.perform(stop_id: "901280", time_to_stop: 360)
@@ -107,7 +107,7 @@ post '/' do
     response.add_hash_card( { :title => 'Nextbus Running', :subtitle => 'It is truly lit' } )
   end
 
-  if (request.type == 'INTENT_REQUEST' && user_id)
+  if (request.type == 'INTENT_REQUEST' && !user_id.nil?)
     # Process your Intent Request
     p request
     p "request slots: #{request.slots}"
@@ -116,7 +116,7 @@ post '/' do
     response.add_hash_card( { :title => 'Ruby Intent', :subtitle => "Intent #{request.name}" } )
   end
 
-  if (request.type =='SESSION_ENDED_REQUEST' && user_id)
+  if (request.type =='SESSION_ENDED_REQUEST' && !user_id.nil?)
     # Wrap up whatever we need to do.
     p "#{request.type}"
     p "#{request.reason}"
@@ -127,4 +127,5 @@ post '/' do
   # Return response
   response.build_response
   p "built response"
+  p response
 end
