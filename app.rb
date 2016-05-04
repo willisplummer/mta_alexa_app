@@ -75,7 +75,7 @@ post '/' do
   # See session object for more information.
   session = request.session
   uid = session.user["userId"]
-  p "user id: #{user.id}"
+  p "user id: #{uid}"
   alexa = Alexa.find_by(alexa_user_id: uid) || Alexa.create(alexa_user_id: uid)
   user_id = alexa.user_id
   if user_id
