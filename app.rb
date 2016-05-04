@@ -86,19 +86,19 @@ post '/' do
     user = User.find(user_id)
     p "user id: #{user.id}"
   else
-    p "generating activation_key"
-    t = rand(36**8).to_s(36)
-    alexa.update(activation_key: t)
-    p "activation_key: #{t}"
 
-    response.add_speech("Please activate your device at mtabustimes.com. Create an account and then enter your unique activation code: #{alexa.activation_key}")
-    response.add_hash_card( { :title => 'Activate your device', :subtitle => 'It is truly lit' } )
-    # response.add_card( { :title => 'Activate your device', :subtitle => 'It is truly lit', :content => "Head to mtabustimes.com. Create an account and then enter your unique activation code: #{alexa.activation_key}"} )
-    p "building response"
-    # Return response
-    response.build_response
-    p "built response"
-  end
+  p "generating activation_key"
+  t = rand(36**8).to_s(36)
+  alexa.update(activation_key: t)
+  p "activation_key: #{t}"
+
+  response.add_speech("Please activate your device at mtabustimes.com. Create an account and then enter your unique activation code: #{alexa.activation_key}")
+  response.add_hash_card( { :title => 'Activate your device', :subtitle => 'It is truly lit' } )
+  # response.add_card( { :title => 'Activate your device', :subtitle => 'It is truly lit', :content => "Head to mtabustimes.com. Create an account and then enter your unique activation code: #{alexa.activation_key}"} )
+  p "building response"
+  # Return response
+  response.build_response
+  p "built response"
 
   time = Time.now
   time_string = "The time is now #{time.strftime("%l:%M%p")}. "
