@@ -75,20 +75,24 @@ post '/' do
   # See session object for more information.
   session = request.session
   uid = session.user["userId"]
-  p "user id: #{uid}"
+  p "amazon user id: #{uid}"
   alexa = Alexa.find_by(alexa_user_id: uid) || Alexa.create(alexa_user_id: uid)
   user_id = alexa.user_id
 
   # We need a response object to respond to the Alexa.
   response = AlexaRubykit::Response.new
 
-  if user_id
+  if !user_id.nil?
     user = User.find(user_id)
+    p "user id: #{user.id}"
   else
+    p "generating activation_key"
     while false
       t = rand(36**8).to_s(36)
       alexa.update(activation_key: t)
     end
+    p "activation_key: #{t}"
+
 
     response.add_speech("Please activate your device at mtabustimes.com. Create an account and then enter your unique activation code: #{alexa.activation_key}")
     response.add_hash_card( { :title => 'Activate your device', :subtitle => 'It is truly lit' } )
