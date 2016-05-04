@@ -85,7 +85,7 @@ post '/' do
   if !user_id.nil?
     user = User.find(user_id)
     p "user id: #{user.id}"
-  elsif alex.activation_key.nil?
+  elsif alexa.activation_key.nil?
     p "generating activation_key"
     t = rand(36**8).to_s(36)
     alexa.update(activation_key: t)
