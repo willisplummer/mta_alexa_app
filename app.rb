@@ -16,6 +16,9 @@ end
 
 enable :sessions
 
+content_type('application/json')
+
+
 get '/' do
   "alexa mta app"
 end
@@ -64,7 +67,6 @@ post '/activate' do
 end
 
 post '/' do
-  content_type('application/json')
 
   # Check that it's a valid Alexa request
   request_json = JSON.parse(request.body.read.to_s)
@@ -93,9 +95,10 @@ post '/' do
     response.add_speech("Please activate your device at mtabustimes.com. Create an account and then enter your unique activation code: #{alexa.activation_key}")
   else
     p "activation key already exists"
-    p "activation_key: #{t}"
+    p "activation_key: #{alexa.activation_key}"
     response.add_speech("Please activate your device at mtabustimes.com. Create an account and then enter your unique activation code: #{alexa.activation_key}")
     response.add_hash_card( { :title => 'Nextbus Running', :subtitle => 'It is truly lit' } )
+    p response
     response.build_response
   end
 
