@@ -85,13 +85,17 @@ post '/' do
   if !user_id.nil?
     user = User.find(user_id)
     p "user id: #{user.id}"
-  else
+  elsif alex.activation_key.nil?
     p "generating activation_key"
     t = rand(36**8).to_s(36)
     alexa.update(activation_key: t)
     p "activation_key: #{t}"
-
     response.add_speech("Please activate your device at mtabustimes.com. Create an account and then enter your unique activation code: #{alexa.activation_key}")
+  else
+    p "activation_key: #{t}"
+    response.add_speech("Please activate your device at mtabustimes.com. Create an account and then enter your unique activation code: #{alexa.activation_key}")
+  end
+
     # response.add_hash_card( { :title => 'Activate your device', :subtitle => 'It is truly lit' } )
     # response.add_card( { :title => 'Activate your device', :subtitle => 'It is truly lit', :content => "Head to mtabustimes.com. Create an account and then enter your unique activation code: #{alexa.activation_key}"} )
   end
