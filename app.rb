@@ -16,8 +16,9 @@ end
 
 enable :sessions
 
-content_type('application/json')
-
+before do
+  content_type('application/json')
+end
 
 get '/' do
   "alexa mta app"
