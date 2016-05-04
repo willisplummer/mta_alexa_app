@@ -87,12 +87,9 @@ post '/' do
     p "user id: #{user.id}"
   else
     p "generating activation_key"
-    while false
-      t = rand(36**8).to_s(36)
-      alexa.update(activation_key: t)
-    end
+    t = rand(36**8).to_s(36)
+    alexa.update(activation_key: t)
     p "activation_key: #{t}"
-
 
     response.add_speech("Please activate your device at mtabustimes.com. Create an account and then enter your unique activation code: #{alexa.activation_key}")
     response.add_hash_card( { :title => 'Activate your device', :subtitle => 'It is truly lit' } )
