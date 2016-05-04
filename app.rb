@@ -87,7 +87,7 @@ post '/' do
   else
     while false
       t = rand(36**8).to_s(36)
-      Alexa.update(activation_key: t)
+      alexa.update(activation_key: t)
     end
 
     response.add_speech("Please activate your device at mtabustimes.com. Create an account and then enter your unique activation code: #{alexa.activation_key}")
