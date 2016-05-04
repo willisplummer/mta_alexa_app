@@ -14,6 +14,8 @@ require './behaviors/HandleIntentRequest.rb'
   Dir.glob(File.expand_path("./#{dir}/*.rb")).each {|file| require file }
 end
 
+enable :sessions
+
 get '/' do
   "alexa mta app"
 end
@@ -23,14 +25,41 @@ get '/signup' do
 end
 
 post '/signup' do
-  name = params[:username]
+  email = params[:email]
   pw1 = params[:pw1]
   pw2 = params[:pw2]
-  if false
-    User.new(alexa_user_id: params[:username])
-    print "got it. your name is #{name} and your password is #{pw}"
+  user = User.new(email: email, password: pw1)
+  if user.save
+    session[:user] = user
+    redirect to('/activate')
   else
-    haml :signup, locals: {username: name, pw1: pw1, pw2: pw2, errors: "no good"}
+    haml :signup, locals: {email: email, pw1: pw1, pw2: pw2, errors: user}
+  end
+end
+
+get '/activate' do
+  if session[:user]
+    haml :activate
+  else
+    redirect to('/signup')
+  end
+end
+
+post '/activate' do
+  if session[:user]
+    alexa = Alexa.find_by(activation_key: params[:activationcode])
+    if alexa && alexa.user_id.nil?
+      alexa.update(user_id: session[:user].id)
+      "connected"
+    elsif alexa && alexa.user_id == session[:user].id
+      haml :activate, locals: {errors: ["This device is already tied to your account"]}
+    elsif alexa
+      haml :activate, locals: {errors: ["This device is already tied to a different account"]}
+    else
+      haml :activate, locals: {errors: ["Code not found. Ask alexa for a new code."]}
+    end
+  else
+    redirect to('/signup')
   end
 end
 

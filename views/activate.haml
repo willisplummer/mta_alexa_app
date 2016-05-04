@@ -1,24 +1,18 @@
-%h1 Welcome
+%h1 Activate your Amazon Echo
 %p Welcome to my shitty form
 
-%form{action: "signup", method: "post", id:"signupform", onsubmit: "return validateForm(this)"}
+%form{action: "activate", method: "post", id:"activateform", onsubmit: "return validateForm(this)"}
   %fieldset
     %ol
       %li
-        %label{for: "email"} Email:
-        %input{type: "text", name: "email", value: locals[:email] ? locals[:email] : "", class: "text"}
-      %li
-        %label{for: "pw1"} Password:
-        %input{type: "text", name: "pw1", value: locals[:pw1] ? locals[:pw1] : "", class: "text"}
-      %li
-        %label{for: "pw2"} Re-enter your password:
-        %input{type: "text", name: "pw2", value: locals[:pw2] ? locals[:pw2] : "", class: "text"}
+        %label{for: "activationcode"} Activation Code:
+        %input{type: "text", name: "activationcode", class: "text"}
     %input{type: "submit", name: "submit", value: "Submit"}
 
 %p{id:"errors"}
   %ul{id:"errorslist"}
-    - if !locals[:errors].nil? && locals[:errors].errors.any?
-      - locals[:errors].errors.full_messages.each do |msg|
+    - if !locals[:errors].nil?
+      - locals[:errors].each do |msg|
         %li
           = msg
         %br
