@@ -127,5 +127,5 @@ post '/' do
   # Return response
   response.build_response
   p "built response"
-  p response
+  p "response: #{response}"
 end
