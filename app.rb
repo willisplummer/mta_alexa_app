@@ -75,8 +75,21 @@ post '/' do
   # See session object for more information.
   session = request.session
   uid = session.user["userId"]
-  user = User.find_by(alexa_user_id: uid) || User.create(alexa_user_id: uid)
   p "user id: #{user.id}"
+  alexa = Alexa.find_by(alexa_user_id: uid) || Alexa.create(alexa_user_id: uid)
+  user_id = alexa.user_id
+  if user_id
+    user = User.find(user_id)
+  else
+    while false
+      t = rand(36**8).to_s(36)
+      Alexa.update(activation_key: t)
+    end
+
+    response.add_speech("Please activate your device at mtabustimes.com. Create an account and then enter your unique activation code: #{alexa.activation_key}")
+    response.add_hash_card( { :title => 'Activate your device', :subtitle => 'It is truly lit' } )
+    response.add_card( { :title => 'Activate your device', :subtitle => 'It is truly lit', :content => "Head to mtabustimes.com. Create an account and then enter your unique activation code: #{alexa.activation_key}"} )
+  end
 
   # We need a response object to respond to the Alexa.
   response = AlexaRubykit::Response.new
@@ -84,7 +97,7 @@ post '/' do
   time = Time.now
   time_string = "The time is now #{time.strftime("%l:%M%p")}. "
 
-  if (request.type == 'LAUNCH_REQUEST')
+  if (request.type == 'LAUNCH_REQUEST' && user_id)
     # Process your Launch Request
     # Call your methods for your application here that process your Launch Request.
     bus_string = GetBusTimes.perform(stop_id: "901280", time_to_stop: 360)
@@ -92,7 +105,7 @@ post '/' do
     response.add_hash_card( { :title => 'Nextbus Running', :subtitle => 'It is truly lit' } )
   end
 
-  if (request.type == 'INTENT_REQUEST')
+  if (request.type == 'INTENT_REQUEST' && user_id)
     # Process your Intent Request
     p request
     p "request slots: #{request.slots}"
@@ -101,7 +114,7 @@ post '/' do
     response.add_hash_card( { :title => 'Ruby Intent', :subtitle => "Intent #{request.name}" } )
   end
 
-  if (request.type =='SESSION_ENDED_REQUEST')
+  if (request.type =='SESSION_ENDED_REQUEST' && user_id)
     # Wrap up whatever we need to do.
     p "#{request.type}"
     p "#{request.reason}"
