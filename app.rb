@@ -92,8 +92,11 @@ post '/' do
     p "activation_key: #{t}"
     response.add_speech("Please activate your device at mtabustimes.com. Create an account and then enter your unique activation code: #{alexa.activation_key}")
   else
+    p "activation key already exists"
     p "activation_key: #{t}"
     response.add_speech("Please activate your device at mtabustimes.com. Create an account and then enter your unique activation code: #{alexa.activation_key}")
+    response.add_hash_card( { :title => 'Nextbus Running', :subtitle => 'It is truly lit' } )
+    response.build_response
   end
 
     # response.add_hash_card( { :title => 'Activate your device', :subtitle => 'It is truly lit' } )
@@ -103,6 +106,7 @@ post '/' do
   time_string = "The time is now #{time.strftime("%l:%M%p")}. "
 
   if (request.type == 'LAUNCH_REQUEST' && !user_id.nil?)
+    p "LAUNCH REQUEST"
     # Process your Launch Request
     # Call your methods for your application here that process your Launch Request.
     bus_string = GetBusTimes.perform(stop_id: "901280", time_to_stop: 360)
@@ -112,6 +116,7 @@ post '/' do
 
   if (request.type == 'INTENT_REQUEST' && !user_id.nil?)
     # Process your Intent Request
+    p "INTENT REQUEST"
     p request
     p "request slots: #{request.slots}"
     response_string = HandleIntentRequest.perform(user: user, request: request, response: response)
@@ -120,15 +125,16 @@ post '/' do
   end
 
   if (request.type =='SESSION_ENDED_REQUEST' && !user_id.nil?)
+    p "SESSION ENDED REQUEST"
     # Wrap up whatever we need to do.
     p "#{request.type}"
     p "#{request.reason}"
     halt 200
   end
 
-  p "g response"
-  # Return response
-  response.build_response
-  p "built response"
-  p "response: #{response}"
+  # p "building response"
+  # # Return response
+  # response.build_response
+  # p "built response"
+  # p "response: #{response}"
 end
