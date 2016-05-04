@@ -98,7 +98,6 @@ post '/' do
 
     # response.add_hash_card( { :title => 'Activate your device', :subtitle => 'It is truly lit' } )
     # response.add_card( { :title => 'Activate your device', :subtitle => 'It is truly lit', :content => "Head to mtabustimes.com. Create an account and then enter your unique activation code: #{alexa.activation_key}"} )
-  end
 
   time = Time.now
   time_string = "The time is now #{time.strftime("%l:%M%p")}. "
@@ -127,7 +126,7 @@ post '/' do
     halt 200
   end
 
-  p "building response"
+  p "g response"
   # Return response
   response.build_response
   p "built response"
