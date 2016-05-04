@@ -78,6 +78,10 @@ post '/' do
   p "user id: #{uid}"
   alexa = Alexa.find_by(alexa_user_id: uid) || Alexa.create(alexa_user_id: uid)
   user_id = alexa.user_id
+
+  # We need a response object to respond to the Alexa.
+  response = AlexaRubykit::Response.new
+
   if user_id
     user = User.find(user_id)
   else
@@ -90,9 +94,6 @@ post '/' do
     response.add_hash_card( { :title => 'Activate your device', :subtitle => 'It is truly lit' } )
     response.add_card( { :title => 'Activate your device', :subtitle => 'It is truly lit', :content => "Head to mtabustimes.com. Create an account and then enter your unique activation code: #{alexa.activation_key}"} )
   end
-
-  # We need a response object to respond to the Alexa.
-  response = AlexaRubykit::Response.new
 
   time = Time.now
   time_string = "The time is now #{time.strftime("%l:%M%p")}. "
