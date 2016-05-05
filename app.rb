@@ -14,6 +14,18 @@ require './behaviors/HandleIntentRequest.rb'
   Dir.glob(File.expand_path("./#{dir}/*.rb")).each {|file| require file }
 end
 
+before '/' do
+  content_type('application/json')
+end
+
+post '/' do
+  request_json = JSON.parse(request.body.read.to_s)
+  request = AlexaRubykit.build_request(request_json)
+  session = request.session
+  response.add_speech("this is a test message")
+  response.build_response
+end
+
 enable :sessions
 
 get '/' do
@@ -61,18 +73,6 @@ post '/activate' do
   else
     redirect to('/signup')
   end
-end
-
-before '/' do
-  content_type('application/json')
-end
-
-post '/' do
-  request_json = JSON.parse(request.body.read.to_s)
-  request = AlexaRubykit.build_request(request_json)
-  session = request.session
-  response.add_speech("this is a test message")
-  response.build_response
 end
 
 post '/testtesttest' do
