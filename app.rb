@@ -27,8 +27,16 @@ post '/' do
   session = request.session
   amazon_device_id = session.user["userId"]
   alexa = Alexa.find_by(alexa_user_id: amazon_device_id) || Alexa.create(alexa_user_id: amazon_device_id)
+  user = alexa.user
 
-  response.add_speech("this is a test message")
+  if user.nil? && alexa.activation_key
+    response.add_speech("this is a test message")
+  elsif user.nil?
+    response.add_speech("you need an activation code")
+  else
+    response.add_speech("you are hooked up")
+  end
+
   response.build_response
 end
 
