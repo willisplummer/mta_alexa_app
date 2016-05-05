@@ -59,7 +59,7 @@ post '/signup' do
   pw1 = params[:pw1]
   pw2 = params[:pw2]
   user = User.new(email: email, password: pw1)
-  if user.save
+  if pw1 == pw2 && user.save
     session[:user] = user
     redirect to('/activate')
   else

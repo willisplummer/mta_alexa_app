@@ -6,13 +6,13 @@
     %ol
       %li
         %label{for: "email"} Email:
-        %input{type: "text", name: "email", value: locals[:email] ? locals[:email] : "", class: "text"}
+        %input{type: "text", name: "email", value: locals[:email] ? locals[:email] : "", class: "text", required: true}
       %li
         %label{for: "pw1"} Password:
-        %input{type: "text", name: "pw1", value: locals[:pw1] ? locals[:pw1] : "", class: "text"}
+        %input{type: "password", name: "pw1", class: "text", required: true}
       %li
         %label{for: "pw2"} Re-enter your password:
-        %input{type: "text", name: "pw2", value: locals[:pw2] ? locals[:pw2] : "", class: "text"}
+        %input{type: "password", name: "pw2", class: "text", required: true}
     %input{type: "submit", name: "submit", value: "Submit"}
 
 %p{id:"errors"}
@@ -28,7 +28,8 @@
     var errors = [];
     errors.push(validatePWLength(form));
     errors.push(validatePWMatch(form));
-    errors.push(validateEmail(form));
+    errors.push(validateEmailLength(form));
+    errors.push(validateEmailFormat(form));
     var filteredErrors = errors.filter(notNull);
     if (filteredErrors.length > 0) {
       printErrors(filteredErrors)
@@ -68,12 +69,21 @@
     }
   }
 
-  function validateEmail(form) {
+  function validateEmailLength(form) {
     var length = form.email.value.length;
-    if (4 <= length && length<= 20) {
+    if (4 <= length) {
       return;
     }
     else {
-      return "Email must be between four and twenty characters";
+      return "Email must be more than four characters long";
     }
   }
+
+  function validateEmailFormat(form) {
+    var email = form.email.value;
+    var atpos = email.indexOf("@")
+    var dotpos = email.lastIndexOf(".")
+    if (atpos < 1 || dotpos < atpos + 2 || dotpos + 2 >= email.length) {
+      return "Email is invalid";
+    }
+  };
