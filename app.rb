@@ -30,9 +30,11 @@ post '/' do
   user = alexa.user
 
   if user.nil? && alexa.activation_key
-    response.add_speech("this is a test message")
+    response.add_speech("you have an activation code")
   elsif user.nil?
-    response.add_speech("you need an activation code")
+    token = rand(36**8).to_s(36)
+    alexa.update(activation_key: token)
+    response.add_speech("Please activate your device at mtabustimes.com. Create an account and then enter your unique activation code. Your code is" + alexa.activation_key)
   else
     response.add_speech("you are hooked up")
   end
