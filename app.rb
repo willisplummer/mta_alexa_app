@@ -14,7 +14,7 @@ require './behaviors/HandleIntentRequest.rb'
   Dir.glob(File.expand_path("./#{dir}/*.rb")).each {|file| require file }
 end
 
-DOMAIN = "https://quiet-headland-17584.herokuapp.com/"
+DOMAIN = "https://quiet-headland-17584.herokuapp.com"
 
 before '/' do
   content_type('application/json')
@@ -32,7 +32,7 @@ post '/' do
   user = alexa.user
 
   if user.nil? && alexa.activation_key
-    response.add_speech("Please activate your device at" + DOMAIN + "Create an account and then enter your unique activation code. Your code is" + alexa.activation_key)
+    response.add_speech("Please activate your device at #{DOMAIN}. Create an account and then enter your unique activation code. Your code is #{alexa.activation_key}")
   elsif user.nil?
     token = rand(36**8).to_s(36)
     alexa.update(activation_key: token)
