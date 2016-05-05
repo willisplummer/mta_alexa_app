@@ -32,11 +32,11 @@ post '/' do
   user = alexa.user
 
   if user.nil? && alexa.activation_key
-    response.add_speech("Please activate your device at #{DOMAIN}. Create an account and then enter your unique activation code. Your code is #{alexa.activation_key}")
+    response.add_speech("Please activate your device at #{DOMAIN}. Create an account and then enter your unique activation code. Your code is <say-as interpret-as='spell-out'>#{alexa.activation_key}</say-as>")
   elsif user.nil?
     token = rand(36**8).to_s(36)
     alexa.update(activation_key: token)
-    response.add_speech("Please activate your device at mtabustimes.com. Create an account and then enter your unique activation code. Your code is" + alexa.activation_key)
+    response.add_speech("Please activate your device at #{DOMAIN}. Create an account and then enter your unique activation code. Your code is <say-as interpret-as='spell-out'>#{alexa.activation_key}</say-as>")
   else
     response.add_speech("you are hooked up")
   end
