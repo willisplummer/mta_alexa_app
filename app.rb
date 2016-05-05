@@ -68,6 +68,14 @@ before '/' do
 end
 
 post '/' do
+  request_json = JSON.parse(request.body.read.to_s)
+  request = AlexaRubykit.build_request(request_json)
+  session = request.session
+  response.add_speech("this is a test message")
+  response.build_response
+end
+
+post '/testtesttest' do
   # Check that it's a valid Alexa request
   request_json = JSON.parse(request.body.read.to_s)
 
