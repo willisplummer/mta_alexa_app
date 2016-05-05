@@ -1,0 +1,19 @@
+%h1 Logged In
+%h2 Your Devices:
+= "You don't have any devices connected to this account yet" if devices.length == 0
+- devices.each do |d|
+  = d.alexa_user_id
+%br
+%br
+
+%h3 Activate a new device:
+= haml :'partials/activate_form_partial'
+
+%h2 Your Stops:
+= "You don't have any stops connected to this account yet" if stops.length == 0
+- stops.each do |s|
+  = "#{s.name} (#{s.stop_id})"
+%h3 Add a new stop:
+= haml :'partials/stops_partial'
+
+%a{href: '/logout'} (logout)

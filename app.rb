@@ -47,7 +47,7 @@ end
 enable :sessions
 
 get '/' do
-  "alexa mta app"
+  redirect to('/signup')
 end
 
 get '/signup' do
@@ -84,7 +84,7 @@ post '/activate' do
     alexa = Alexa.find_by(activation_key: params[:activationcode])
     if alexa && alexa.user_id.nil?
       alexa.update(user_id: session[:user].id)
-      "connected"
+      redirect to('/home')
     elsif alexa && alexa.user_id == session[:user].id
       haml :activate, locals: {errors: ["This device is already tied to your account"]}
     elsif alexa
@@ -118,6 +118,32 @@ end
 get '/logout' do
   session.clear
   redirect to('/login')
+end
+
+get '/home' do
+  user = session[:user]
+  if user
+    haml :loggedin, locals: {devices: user.alexas, stops: user.stops}
+  else
+    redirect to('/login')
+  end
+end
+
+get '/addstop' do
+  if session[:user]
+    haml :addstop
+  else
+    redirect to('/signup')
+  end
+end
+
+post '/addstop' do
+  stop = Stop.new(name: params[stop_name], mta_stop_id: params[mta_stop_id])
+  if stop.save
+    redirect to('/home')
+  else
+    haml :addstop, locals: {name: params[stop_name], mta_stop_id: params[mta_stop_id], errors: stop.errors.full_messages}
+  end
 end
 
 #TODO: re-add all this shit about request type handling as a behavior

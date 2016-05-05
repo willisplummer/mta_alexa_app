@@ -1,0 +1,18 @@
+%form{action: "activate", method: "post", id:"activateform", onsubmit: "return validateForm(this)"}
+  %fieldset
+    %ol
+      %li
+        %label{for: "stopname"} Stop Name:
+        %input{type: "text", name: "stopname", class: "text", required: true}
+      %li
+        %label{for: "stopid"} Stop ID:
+        %input{type: "text", name: "stopid", class: "text", required: true}
+    %input{type: "submit", name: "submit", value: "Submit"}
+
+%p{id:"new_stop_form_errors"}
+  %ul{id:"stoperrorslist"}
+    - if !locals[:errors].nil?
+      - locals[:errors].each do |msg|
+        %li
+          = msg
+        %br
