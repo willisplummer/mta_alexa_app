@@ -21,6 +21,7 @@ end
 post '/' do
   request_json = JSON.parse(request.body.read.to_s)
   request = AlexaRubykit.build_request(request_json)
+  response = AlexaRubykit::Response.new
   session = request.session
   response.add_speech("this is a test message")
   response.build_response
