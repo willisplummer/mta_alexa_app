@@ -16,10 +16,6 @@ end
 
 enable :sessions
 
-before do
-  content_type('application/json')
-end
-
 get '/' do
   "alexa mta app"
 end
@@ -67,19 +63,24 @@ post '/activate' do
   end
 end
 
-post '/' do
+before '/' do
+  content_type('application/json')
+end
 
+post '/' do
   # Check that it's a valid Alexa request
   request_json = JSON.parse(request.body.read.to_s)
+
   # Creates a new Request object with the request parameter.
   request = AlexaRubykit.build_request(request_json)
 
   # We can capture Session details inside of request.
   # See session object for more information.
   session = request.session
-  uid = session.user["userId"]
-  p "amazon user id: #{uid}"
-  alexa = Alexa.find_by(alexa_user_id: uid) || Alexa.create(alexa_user_id: uid)
+  amazon_device_id = session.user["userId"]
+
+  p "amazon user id: #{amazon_device_id}"
+  alexa = Alexa.find_by(alexa_user_id: amazon_device_id) || Alexa.create(alexa_user_id: amazon_device_id)
   user_id = alexa.user_id
 
   # We need a response object to respond to the Alexa.
