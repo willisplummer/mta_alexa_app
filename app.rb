@@ -51,7 +51,11 @@ get '/' do
 end
 
 get '/signup' do
-  haml :signup
+  if session[:user]
+    "you're already logged in"
+  else
+    haml :signup
+  end
 end
 
 post '/signup' do
@@ -63,7 +67,7 @@ post '/signup' do
     session[:user] = user
     redirect to('/activate')
   else
-    haml :signup, locals: {email: email, pw1: pw1, pw2: pw2, errors: user}
+    haml :signup, locals: {email: email, pw1: pw1, pw2: pw2, errors: user.errors.full_messages}
   end
 end
 
@@ -93,6 +97,30 @@ post '/activate' do
   end
 end
 
+get '/login' do
+  if session[:user]
+    "you're already logged in"
+  else
+    haml :login
+  end
+end
+
+post '/login' do
+  user = User.find_by(email: params[:email])
+  if user
+    session[:user] = user
+    "you exist and are logged in"
+  else
+    haml :login, locals: {errors: ["Error: invalid login credentials"]}
+  end
+end
+
+get '/logout' do
+  session.clear
+  redirect to('/login')
+end
+
+#TODO: re-add all this shit about request type handling as a behavior
 post '/testtesttest' do
   # Check that it's a valid Alexa request
   request_json = JSON.parse(request.body.read.to_s)
