@@ -11,5 +11,5 @@ gem 'sinatra-activerecord'
 gem 'ruby-protocol-buffers'
 gem 'pg'
 gem 'sinatra-sequel'
-gem 'haml'
+gem 'haml', require: 'tilt/haml'
 gem "gtfs-orm", require: "gtfs/orm"
