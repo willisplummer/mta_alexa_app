@@ -20,6 +20,7 @@
 
 %p{id:"errors"}
   %ul{id:"errorslist"}
+    = locals[:errors]
     - if !locals[:errors].nil?
       - locals[:errors].each do |msg|
         %li

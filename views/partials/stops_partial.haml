@@ -2,17 +2,22 @@
   %fieldset
     %ol
       %li
-        %label{for: "stopname"} Stop Name:
-        %input{type: "text", name: "stopname", class: "text", required: true}
+        %label{for: "stop_name"} Stop Name:
+        %input{type: "text", name: "stop_name", class: "text", required: true}
       %li
-        %label{for: "stopid"} Stop ID:
-        %input{type: "text", name: "stopid", class: "text", required: true}
+        %label{for: "mta_stop_id"} Stop ID:
+        %input{type: "text", name: "mta_stop_id", class: "text", required: true}
     %input{type: "submit", name: "submit", value: "Submit"}
 
 %p{id:"new_stop_form_errors"}
   %ul{id:"stoperrorslist"}
-    - if !locals[:errors].nil?
-      - locals[:errors].each do |msg|
+    - if !locals[:add_stop_errors].nil?
+      - locals[:add_stop_errors].each do |msg|
         %li
           = msg
         %br
+
+:javascript
+  function validateForm(form) {
+    return true;
+  }

@@ -8,8 +8,8 @@
 
 %p{id:"errors"}
   %ul{id:"activate_errors_list"}
-    - if !locals[:errors].nil?
-      - locals[:errors].each do |msg|
+    - if !locals[:activate_errors].nil?
+      - locals[:activate_errors].each do |msg|
         %li
           = msg
         %br

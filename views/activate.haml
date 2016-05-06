@@ -1,4 +1,4 @@
 %h1 Activate your Amazon Echo
 %p Please enter your 8 digit activation code
-
-= haml :'partials/activate_form_partial'
+/ NOTE: very important to pass in all the locals when loading a partial
+= haml :'partials/activate_form_partial', locals: {locals: locals}

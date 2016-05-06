@@ -46,16 +46,21 @@ end
 
 enable :sessions
 
+def check_logged_in
+  redirect to('/signup') unless session[:user_id]
+end
+
+def check_logged_out
+  redirect to('/home') if session[:user_id]
+end
+
 get '/' do
   redirect to('/signup')
 end
 
 get '/signup' do
-  if session[:user]
-    "you're already logged in"
-  else
-    haml :signup
-  end
+  check_logged_out
+  haml :signup
 end
 
 post '/signup' do
@@ -64,7 +69,7 @@ post '/signup' do
   pw2 = params[:pw2]
   user = User.new(email: email, password: pw1)
   if pw1 == pw2 && user.save
-    session[:user] = user
+    session[:user_id] = user.id
     redirect to('/activate')
   else
     haml :signup, locals: {email: email, pw1: pw1, pw2: pw2, errors: user.errors.full_messages}
@@ -72,44 +77,40 @@ post '/signup' do
 end
 
 get '/activate' do
-  if session[:user]
-    haml :activate
-  else
-    redirect to('/signup')
-  end
+  check_logged_in
+  activate_errors = session[:activate_errors]
+  session.delete(:activate_errors)
+  haml :activate, locals: {activate_errors: activate_errors}
 end
 
 post '/activate' do
-  if session[:user]
-    alexa = Alexa.find_by(activation_key: params[:activationcode])
-    if alexa && alexa.user_id.nil?
-      alexa.update(user_id: session[:user].id)
-      redirect to('/home')
-    elsif alexa && alexa.user_id == session[:user].id
-      haml :activate, locals: {errors: ["This device is already tied to your account"]}
-    elsif alexa
-      haml :activate, locals: {errors: ["This device is already tied to a different account"]}
-    else
-      haml :activate, locals: {errors: ["Code not found. Ask alexa for a new code."]}
-    end
+  check_logged_in
+  alexa = Alexa.find_by(activation_key: params[:activationcode])
+  if alexa && alexa.user_id.nil?
+    alexa.update(user_id: session[:user_id])
+    redirect to('/home')
+  elsif alexa && alexa.user_id == session[:user_id]
+    session[:activate_errors] = ["This device is already tied to your account"]
+    redirect back
+  elsif alexa
+    session[:activate_errors] = ["This device is already tied to a different account"]
+    redirect back
   else
-    redirect to('/signup')
+    session[:activate_errors] = ["Code not found. Ask alexa for a new code."]
+    redirect back
   end
 end
 
 get '/login' do
-  if session[:user]
-    "you're already logged in"
-  else
-    haml :login
-  end
+  check_logged_out
+  haml :login
 end
 
 post '/login' do
   user = User.find_by(email: params[:email])
   if user
-    session[:user] = user
-    "you exist and are logged in"
+    session[:user_id] = user.id
+    redirect to('/home')
   else
     haml :login, locals: {errors: ["Error: invalid login credentials"]}
   end
@@ -121,28 +122,36 @@ get '/logout' do
 end
 
 get '/home' do
-  user = session[:user]
-  if user
-    haml :loggedin, locals: {devices: user.alexas, stops: user.stops}
-  else
-    redirect to('/login')
-  end
+  check_logged_in
+  user = User.find(session[:user_id])
+
+  #get error messages about activating alexa device
+  #and clear them from the session
+  activate_errors = session[:activate_errors]
+  session.delete(:activate_errors)
+
+  #get error messages about adding a new stop
+  #and clear them from the session
+  add_stop_errors = session[:add_stop_errors]
+  session.delete(:add_stop_errors)
+
+  haml :loggedin, locals: {email: user.email, devices: user.alexas, stops: user.stops, activate_errors: activate_errors, add_stop_errors: add_stop_errors}
 end
 
 get '/addstop' do
-  if session[:user]
-    haml :addstop
-  else
-    redirect to('/signup')
-  end
+  check_logged_in
+  add_stop_errors = session[:add_stop_errors]
+  session.delete(:add_stop_errors)
+  haml :addstop, locals: {add_stop_errors: add_stop_errors}
 end
 
 post '/addstop' do
-  stop = Stop.new(name: params[stop_name], mta_stop_id: params[mta_stop_id])
+  stop = Stop.new(name: params[:stop_name], mta_stop_id: params[:mta_stop_id], user_id: session[:user_id])
   if stop.save
     redirect to('/home')
   else
-    haml :addstop, locals: {name: params[stop_name], mta_stop_id: params[mta_stop_id], errors: stop.errors.full_messages}
+    session[:add_stop_errors] = stop.errors.full_messages
+    redirect back
   end
 end
 

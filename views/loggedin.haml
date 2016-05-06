@@ -1,4 +1,8 @@
 %h1 Logged In
+%p
+  Currently logged in as
+  = locals[:email]
+
 %h2 Your Devices:
 = "You don't have any devices connected to this account yet" if devices.length == 0
 - devices.each do |d|
@@ -7,13 +11,15 @@
 %br
 
 %h3 Activate a new device:
-= haml :'partials/activate_form_partial'
+/ NOTE: very important to pass in all the locals when loading a partial
+= haml :'partials/activate_form_partial', locals: locals
 
 %h2 Your Stops:
 = "You don't have any stops connected to this account yet" if stops.length == 0
 - stops.each do |s|
-  = "#{s.name} (#{s.stop_id})"
+  = "#{s.name} (MTA Stop ID: #{s.mta_stop_id})"
 %h3 Add a new stop:
-= haml :'partials/stops_partial'
+/ NOTE: very important to pass in all the locals when loading a partial
+= haml :'partials/stops_partial', locals: locals
 
 %a{href: '/logout'} (logout)

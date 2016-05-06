@@ -1,4 +1,4 @@
 %h1 Add your default bus stop
 %p Please enter your stop info
-
-= haml :'partials/stops_partial'
+/ NOTE: very important to pass in all the locals when loading a partial
+= haml :'partials/stops_partial', locals: {locals: locals}
