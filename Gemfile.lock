@@ -23,6 +23,7 @@ GEM
       ice_nine (~> 0.11.0)
       thread_safe (~> 0.3, >= 0.3.1)
     bacon (1.2.0)
+    bcrypt (3.1.11)
     builder (3.2.2)
     coercible (1.0.0)
       descendants_tracker (~> 0.0.1)
@@ -90,6 +91,7 @@ PLATFORMS
 DEPENDENCIES
   activerecord
   alexa_rubykit
+  bcrypt
   dotenv
   gtfs-orm
   haml

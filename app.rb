@@ -64,15 +64,12 @@ get '/signup' do
 end
 
 post '/signup' do
-  email = params[:email]
-  pw1 = params[:pw1]
-  pw2 = params[:pw2]
-  user = User.new(email: email, password: pw1)
-  if pw1 == pw2 && user.save
+  user = User.new(email: params[:email], password: params[:pw1], password_confirmation: params[:pw2])
+  if user.save
     session[:user_id] = user.id
     redirect to('/activate')
   else
-    haml :signup, locals: {email: email, pw1: pw1, pw2: pw2, errors: user.errors.full_messages}
+    haml :signup, locals: {email: user.email, signup_errors: user.errors.full_messages}
   end
 end
 
@@ -108,7 +105,7 @@ end
 
 post '/login' do
   user = User.find_by(email: params[:email])
-  if user
+  if user && user.authenticate(params[:pw])
     session[:user_id] = user.id
     redirect to('/home')
   else

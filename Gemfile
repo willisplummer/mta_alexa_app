@@ -11,5 +11,6 @@ gem 'sinatra-activerecord'
 gem 'ruby-protocol-buffers'
 gem 'pg'
 gem 'sinatra-sequel'
+gem 'bcrypt' #for encrypting user passwords
 gem 'haml', require: 'tilt/haml'
-gem "gtfs-orm", require: "gtfs/orm"
+gem "gtfs-orm", require: "gtfs/orm" #for working with mta bus documentation
