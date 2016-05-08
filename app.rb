@@ -51,7 +51,7 @@ def handle_request(request, user, response)
   case request.type
   when 'LAUNCH_REQUEST'
     p "LAUNCH REQUEST"
-    default_stop = user.stops.first.mta_stop_id
+    default_stop = user.stops.first.mta_stop_id if user.stops.first
     if default_stop
       bus_string = GetBusTimes.perform(stop_id: stop_id, time_to_stop: 360)
       response.add_speech("It's lit. " + time_string + bus_string)
