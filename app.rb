@@ -45,13 +45,21 @@ post '/' do
 end
 
 def handle_request(request, user, response)
+  time = Time.now
+  time_string = "The time is now #{time.strftime("%l:%M%p")}. "
+
   case request.type
   when 'LAUNCH_REQUEST'
     p "LAUNCH REQUEST"
-    stop_id = user.stops.first.mta_stop_id
-    bus_string = GetBusTimes.perform(stop_id: stop_id, time_to_stop: 360)
-    response.add_speech("It's lit. " + time_string + bus_string)
-    response.add_hash_card( { :title => 'Nextbus Running', :subtitle => 'It is truly lit' } )
+    default_stop = user.stops.first.mta_stop_id
+    if default_stop
+      bus_string = GetBusTimes.perform(stop_id: stop_id, time_to_stop: 360)
+      response.add_speech("It's lit. " + time_string + bus_string)
+      response.add_hash_card( { :title => 'Nextbus Running', :subtitle => 'It is truly lit' } )
+    else
+      response.add_speech("Error: there are no bus stops tied to this account yet")
+      response.add_hash_card( { :title => 'Error', :subtitle => 'there are no bus stops tied to this account yet' } )
+    end
   when 'INTENT_REQUEST'
     p "INTENT REQUEST"
     p request
