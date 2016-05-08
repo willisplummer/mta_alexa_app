@@ -38,10 +38,35 @@ post '/' do
     alexa.update(activation_key: token)
     response.add_speech("Please activate your device at #{DOMAIN}. Create an account and then enter your unique activation code. Your code is <say-as interpret-as='spell-out'>#{alexa.activation_key}</say-as>")
   else
-    response.add_speech("you are hooked up")
+    handle_request(request, user, response)
   end
 
   response.build_response
+end
+
+def handle_request(request, user, response)
+  case request.type
+  when 'LAUNCH_REQUEST'
+    p "LAUNCH REQUEST"
+    stop_id = user.stops.first.mta_stop_id
+    bus_string = GetBusTimes.perform(stop_id: stop_id, time_to_stop: 360)
+    response.add_speech("It's lit. " + time_string + bus_string)
+    response.add_hash_card( { :title => 'Nextbus Running', :subtitle => 'It is truly lit' } )
+  when 'INTENT_REQUEST'
+    p "INTENT REQUEST"
+    p request
+    p "request slots: #{request.slots}"
+    response_string = HandleIntentRequest.perform(user: user, request: request, response: response)
+    response.add_speech(response_string)
+    response.add_hash_card( { :title => 'Ruby Intent', :subtitle => "Intent #{request.name}" } )
+  when 'SESSION_ENDED_REQUEST'
+    p "SESSION ENDED REQUEST"
+    p "#{request.reason}"
+    halt 200
+  else
+    p "request type: #{request.type}"
+    p "INVALID REQUEST TYPE"
+  end
 end
 
 enable :sessions
