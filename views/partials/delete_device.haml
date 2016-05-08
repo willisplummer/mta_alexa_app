@@ -1,0 +1,11 @@
+%form{action:- "devices/#{locals[:device_id]}",
+method: "post",
+id:"deletepost",
+onsubmit: "return validateForm(this)"}
+  %input{type: "hidden", name: "_method", value: "delete"}
+  %input{type: "submit", name: "submit", value: "delete"}
+
+:javascript
+  function validateForm(form) {
+    return true;
+  }

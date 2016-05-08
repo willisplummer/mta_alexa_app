@@ -24,12 +24,11 @@ post '/' do
   request_json = JSON.parse(request.body.read.to_s)
   request = AlexaRubykit.build_request(request_json)
 
-  response = AlexaRubykit::Response.new
-
-  session = request.session
-  amazon_device_id = session.user["userId"]
+  amazon_device_id = request.session.user["userId"]
   alexa = Alexa.find_by(alexa_user_id: amazon_device_id) || Alexa.create(alexa_user_id: amazon_device_id)
   user = alexa.user
+
+  response = AlexaRubykit::Response.new
 
   if user.nil? && alexa.activation_key
     response.add_speech("Please activate your device at #{DOMAIN}. Create an account and then enter your unique activation code. Your code is <say-as interpret-as='spell-out'>#{alexa.activation_key}</say-as>")
@@ -48,9 +47,9 @@ def handle_request(request, user, response)
   time = Time.now
   time_string = "The time is now #{time.strftime("%l:%M%p")}. "
 
+  p "Request Type: #{request.type}"
   case request.type
   when 'LAUNCH_REQUEST'
-    p "LAUNCH REQUEST"
     default_stop = user.stops.first.mta_stop_id if user.stops.first
     if default_stop
       bus_string = GetBusTimes.perform(stop_id: default_stop, time_to_stop: 360)
@@ -61,18 +60,15 @@ def handle_request(request, user, response)
       response.add_hash_card( { :title => 'Error', :subtitle => 'there are no bus stops tied to this account yet' } )
     end
   when 'INTENT_REQUEST'
-    p "INTENT REQUEST"
     p request
     p "request slots: #{request.slots}"
     response_string = HandleIntentRequest.perform(user: user, request: request, response: response)
     response.add_speech(response_string)
     response.add_hash_card( { :title => 'Ruby Intent', :subtitle => "Intent #{request.name}" } )
   when 'SESSION_ENDED_REQUEST'
-    p "SESSION ENDED REQUEST"
-    p "#{request.reason}"
+    p "request reason: #{request.reason}"
     halt 200
   else
-    p "request type: #{request.type}"
     p "INVALID REQUEST TYPE"
   end
 end
@@ -177,85 +173,29 @@ end
 
 post '/addstop' do
   stop = Stop.new(name: params[:stop_name], mta_stop_id: params[:mta_stop_id], user_id: session[:user_id])
-  if stop.save
+  mta_record = GTFS::ORM::Stop.where(stop_id: stop.mta_stop_id.to_s).first
+  if mta_record && stop.save
     redirect to('/home')
+  elsif mta_record
+    session[:add_stop_errors] = stop.errors.full_messages
+    redirect back
   else
     session[:add_stop_errors] = stop.errors.full_messages
+    session[:add_stop_errors] << "Stop ID does not exist"
     redirect back
   end
 end
 
-#TODO: re-add all this shit about request type handling as a behavior
-post '/testtesttest' do
-  # Check that it's a valid Alexa request
-  request_json = JSON.parse(request.body.read.to_s)
-
-  # Creates a new Request object with the request parameter.
-  request = AlexaRubykit.build_request(request_json)
-
-  # We can capture Session details inside of request.
-  # See session object for more information.
-  session = request.session
-  amazon_device_id = session.user["userId"]
-
-  p "amazon user id: #{amazon_device_id}"
-  alexa = Alexa.find_by(alexa_user_id: amazon_device_id) || Alexa.create(alexa_user_id: amazon_device_id)
-  user_id = alexa.user_id
-
-  # We need a response object to respond to the Alexa.
-  response = AlexaRubykit::Response.new
-
-  if !user_id.nil?
-    user = User.find(user_id)
-    p "user id: #{user.id}"
-  elsif alexa.activation_key.nil?
-    p "generating activation_key"
-    t = rand(36**8).to_s(36)
-    alexa.update(activation_key: t)
-    p "activation_key: #{t}"
-    response.add_speech("Please activate your device at mtabustimes.com. Create an account and then enter your unique activation code: #{alexa.activation_key}")
-  else
-    p "activation key already exists"
-    p "activation_key: #{alexa.activation_key}"
-    response.add_speech("Please activate your device. Create an account and then enter your unique activation code: #{alexa.activation_key}")
-    response.add_hash_card( { :title => 'Nextbus Running', :subtitle => 'It is truly lit' } )
-    response.build_response
-    p response
+delete '/stops/:id' do |id|
+  if s = Stop.find(id)
+    s.destroy
   end
+  redirect back
+end
 
-  time = Time.now
-  time_string = "The time is now #{time.strftime("%l:%M%p")}. "
-
-  if (request.type == 'LAUNCH_REQUEST' && !user_id.nil?)
-    p "LAUNCH REQUEST"
-    # Process your Launch Request
-    # Call your methods for your application here that process your Launch Request.
-    bus_string = GetBusTimes.perform(stop_id: "901280", time_to_stop: 360)
-    response.add_speech("It's lit. " + time_string + bus_string)
-    response.add_hash_card( { :title => 'Nextbus Running', :subtitle => 'It is truly lit' } )
+delete '/devices/:id' do |id|
+  if d = Alexa.find(id)
+    d.destroy
   end
-
-  if (request.type == 'INTENT_REQUEST' && !user_id.nil?)
-    # Process your Intent Request
-    p "INTENT REQUEST"
-    p request
-    p "request slots: #{request.slots}"
-    response_string = HandleIntentRequest.perform(user: user, request: request, response: response)
-    response.add_speech(response_string)
-    response.add_hash_card( { :title => 'Ruby Intent', :subtitle => "Intent #{request.name}" } )
-  end
-
-  if (request.type =='SESSION_ENDED_REQUEST' && !user_id.nil?)
-    p "SESSION ENDED REQUEST"
-    # Wrap up whatever we need to do.
-    p "#{request.type}"
-    p "#{request.reason}"
-    halt 200
-  end
-
-  # p "building response"
-  # # Return response
-  # response.build_response
-  # p "built response"
-  # p "response: #{response}"
+  redirect back
 end
