@@ -1,8 +1,8 @@
 class Addtimestamps < ActiveRecord::Migration
   def change
-    add_timestamps(:users)
-    add_timestamps(:alexas)
-    add_timestamps(:stops)
+    add_timestamps :users, null: true
+    add_timestamps :alexas, null: true
+    add_timestamps :stops, null: true
 
     User.where(created_at: nil).update_all(created_at: Time.now)
     User.where(updated_at: nil).update_all(updated_at: Time.now)
