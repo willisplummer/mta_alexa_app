@@ -22,7 +22,7 @@
       = "#{s.name} (MTA Stop ID: #{s.mta_stop_id})"
       = "(default)" if s.id == locals[:default_stop_id]
       = haml :'partials/delete_stop', locals: {stop_id: s.id}
-      = haml :'partials/make_stop_default', locals: {stop_id: s.id} if !s.default
+      = haml :'partials/make_stop_default', locals: {stop_id: s.id} unless s.id == locals[:default_stop_id]
 
 %h3 Add a new stop:
 / NOTE: very important to pass in all the locals when loading a partial
