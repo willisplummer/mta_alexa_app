@@ -16,11 +16,11 @@ end
 
 DOMAIN = "https://quiet-headland-17584.herokuapp.com"
 
-before '/' do
+before '/alexa_endpoint' do
   content_type('application/json')
 end
 
-post '/' do
+post '/alexa_endpoint' do
   request_json = JSON.parse(request.body.read.to_s)
   request = AlexaRubykit.build_request(request_json)
 
