@@ -1,0 +1,11 @@
+%form{action:- "stops/#{locals[:stop_id]}",
+method: "post",
+id:"deletepost",
+onsubmit: "return validateForm(this)"}
+  %input{type: "hidden", name: "default", value: "exists"}
+  %input{type: "submit", name: "submit", value: "set as default"}
+
+:javascript
+  function validateForm(form) {
+    return true;
+  }

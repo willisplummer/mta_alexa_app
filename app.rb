@@ -50,9 +50,9 @@ def handle_request(request, user, response)
   p "Request Type: #{request.type}"
   case request.type
   when 'LAUNCH_REQUEST'
-    default_stop = user.stops.first.mta_stop_id if user.stops.first
+    default_stop = get_default_stop(user)
     if default_stop
-      bus_string = GetBusTimes.perform(stop_id: default_stop, time_to_stop: 360)
+      bus_string = GetBusTimes.perform(stop_id: default_stop.mta_stop_id, time_to_stop: 360)
       response.add_speech("It's lit. " + time_string + bus_string)
       response.add_hash_card( { :title => 'Nextbus Running', :subtitle => 'It is truly lit' } )
     else
@@ -71,6 +71,10 @@ def handle_request(request, user, response)
   else
     p "INVALID REQUEST TYPE"
   end
+end
+
+def get_default_stop(user)
+  user.stops.where(default: true).first || user.stops.first
 end
 
 enable :sessions
@@ -161,7 +165,11 @@ get '/home' do
   add_stop_errors = session[:add_stop_errors]
   session.delete(:add_stop_errors)
 
-  haml :loggedin, locals: {email: user.email, devices: user.alexas, stops: user.stops, activate_errors: activate_errors, add_stop_errors: add_stop_errors}
+  #get default stop id
+  default_stop = get_default_stop(user)
+  default_stop_id = default_stop.id if default_stop
+
+  haml :loggedin, locals: {email: user.email, devices: user.alexas, stops: user.stops, default_stop_id: default_stop_id, activate_errors: activate_errors, add_stop_errors: add_stop_errors}
 end
 
 get '/addstop' do
@@ -175,6 +183,7 @@ post '/addstop' do
   stop = Stop.new(name: params[:stop_name], mta_stop_id: params[:mta_stop_id], user_id: session[:user_id])
   mta_record = GTFS::ORM::Stop.where(stop_id: stop.mta_stop_id.to_s).first
   if mta_record && stop.save
+    stop.make_default if params[:default_stop]
     redirect to('/home')
   elsif mta_record
     session[:add_stop_errors] = stop.errors.full_messages
@@ -189,6 +198,14 @@ end
 delete '/stops/:id' do |id|
   if s = Stop.find(id)
     s.destroy
+  end
+  redirect back
+end
+
+post '/stops/:id' do |id|
+  stop = Stop.find(id)
+  if stop && params[:default]
+    stop.make_default
   end
   redirect back
 end

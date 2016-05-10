@@ -1,12 +1,15 @@
 %form{action: "addstop", method: "post", id:"activateform", onsubmit: "return validateForm(this)"}
   %fieldset
-    %ol
+    %ul
       %li
         %label{for: "stop_name"} Stop Name:
         %input{type: "text", name: "stop_name", class: "text", required: true}
       %li
         %label{for: "mta_stop_id"} Stop ID:
         %input{type: "text", name: "mta_stop_id", class: "text", required: true}
+      %li
+        %label{for: "default_stop"} Set As Default?
+        %input{type: "checkbox", name: "default_stop", class: "text", value: true}
     %input{type: "submit", name: "submit", value: "Submit"}
 
 %p{id:"new_stop_form_errors"}

@@ -11,31 +11,38 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160506140808) do
+ActiveRecord::Schema.define(version: 20160508174825) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
   create_table "alexas", force: :cascade do |t|
-    t.string  "activation_key"
-    t.string  "alexa_user_id"
-    t.integer "user_id"
+    t.string   "activation_key"
+    t.string   "alexa_user_id"
+    t.integer  "user_id"
+    t.datetime "created_at",     null: false
+    t.datetime "updated_at",     null: false
   end
 
   add_index "alexas", ["user_id"], name: "index_alexas_on_user_id", using: :btree
 
   create_table "stops", force: :cascade do |t|
-    t.string  "name"
-    t.integer "mta_stop_id"
-    t.integer "time_to_stop"
-    t.integer "user_id"
+    t.string   "name"
+    t.integer  "mta_stop_id"
+    t.integer  "time_to_stop"
+    t.integer  "user_id"
+    t.boolean  "default",      default: false, null: false
+    t.datetime "created_at",                   null: false
+    t.datetime "updated_at",                   null: false
   end
 
   add_index "stops", ["user_id"], name: "index_stops_on_user_id", using: :btree
 
   create_table "users", force: :cascade do |t|
-    t.string "email"
-    t.string "password_digest"
+    t.string   "email"
+    t.string   "password_digest"
+    t.datetime "created_at",      null: false
+    t.datetime "updated_at",      null: false
   end
 
   add_foreign_key "alexas", "users"
