@@ -80,15 +80,20 @@ end
 enable :sessions
 
 def check_logged_in
-  redirect to('/signup') unless session[:user_id]
+  redirect to('/signup') unless logged_in?
 end
 
 def check_logged_out
-  redirect to('/home') if session[:user_id]
+  redirect to('/home') if logged_in?
+end
+
+def logged_in?
+  true if session[:user_id]
 end
 
 get '/' do
-  redirect to('/signup')
+  check_logged_in
+  redirect to('/home')
 end
 
 get '/signup' do
@@ -97,6 +102,7 @@ get '/signup' do
 end
 
 post '/signup' do
+  check_logged_out
   user = User.new(email: params[:email], password: params[:pw1], password_confirmation: params[:pw2])
   if user.save
     session[:user_id] = user.id
@@ -137,6 +143,7 @@ get '/login' do
 end
 
 post '/login' do
+  check_logged_out
   user = User.find_by(email: params[:email])
   if user && user.authenticate(params[:pw])
     session[:user_id] = user.id
@@ -180,6 +187,7 @@ get '/addstop' do
 end
 
 post '/addstop' do
+  check_logged_in
   stop = Stop.new(name: params[:stop_name], mta_stop_id: params[:mta_stop_id], user_id: session[:user_id])
   mta_record = GTFS::ORM::Stop.where(stop_id: stop.mta_stop_id.to_s).first
   if mta_record && stop.save
@@ -196,6 +204,7 @@ post '/addstop' do
 end
 
 delete '/stops/:id' do |id|
+  check_logged_in
   if s = Stop.find(id)
     s.destroy
   end
@@ -203,6 +212,7 @@ delete '/stops/:id' do |id|
 end
 
 post '/stops/:id' do |id|
+  check_logged_in
   stop = Stop.find(id)
   if stop && params[:default]
     stop.make_default
@@ -211,6 +221,7 @@ post '/stops/:id' do |id|
 end
 
 delete '/devices/:id' do |id|
+  check_logged_in
   if d = Alexa.find(id)
     d.destroy
   end
