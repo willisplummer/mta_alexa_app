@@ -1,11 +1,17 @@
-%form{action:- "stops/#{locals[:stop_id]}",
-method: "post",
-id:"deletepost",
-onsubmit: "return validateForm(this)"}
-  %input{type: "hidden", name: "default", value: "exists"}
-  %input{type: "submit", name: "submit", value: "set as default"}
+%button{type: "button",
+onclick:- "makeDefaultStop(#{locals[:stop_id]})"}
+  set as default
 
 :javascript
-  function validateForm(form) {
-    return true;
+  function makeDefaultStop(stop_id) {
+    var url = "/stops/" + stop_id
+    var xhttp = new XMLHttpRequest()
+    xhttp.onreadystatechange = function () {
+      if (xhttp.readyState == 4 && xhttp.status == 200) {
+        var inner_content = document.getElementById("stop " + stop_id).innerHTML
+        document.getElementById("stop " + stop_id).innerHTML = inner_content.concat(" (default)");
+      }
+    }
+    xhttp.open("POST", url, true);
+    xhttp.send();
   }

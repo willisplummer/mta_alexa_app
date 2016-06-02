@@ -160,7 +160,10 @@ end
 
 get '/home' do
   check_logged_in
-  user = User.find(session[:user_id])
+  @user = User.find(session[:user_id])
+  @stops = @user.stops
+  @devices = @user.alexas
+  @default_stop = get_default_stop(@user)
 
   #get error messages about activating alexa device
   #and clear them from the session
@@ -172,11 +175,7 @@ get '/home' do
   add_stop_errors = session[:add_stop_errors]
   session.delete(:add_stop_errors)
 
-  #get default stop id
-  default_stop = get_default_stop(user)
-  default_stop_id = default_stop.id if default_stop
-
-  haml :loggedin, locals: {email: user.email, devices: user.alexas, stops: user.stops, default_stop_id: default_stop_id, activate_errors: activate_errors, add_stop_errors: add_stop_errors}
+  haml :loggedin, locals: {activate_errors: activate_errors, add_stop_errors: add_stop_errors}
 end
 
 get '/addstop' do
@@ -214,10 +213,19 @@ end
 post '/stops/:id' do |id|
   check_logged_in
   stop = Stop.find(id)
-  if stop && params[:default]
+  user = User.find(session[:user_id])
+  if stop == get_default_stop(user)
+    p "Already default stop"
+    halt 409
+  elsif stop && stop.user_id == session[:user_id]
     stop.make_default
+    halt 200
+  elsif stop
+    p "ERROR: user attempting to set default stop which doesn't belong to them"
+    halt 403
+  else
+    p "ERROR: stop does not exist"
   end
-  redirect back
 end
 
 delete '/devices/:id' do |id|
