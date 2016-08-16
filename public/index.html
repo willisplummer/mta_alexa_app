@@ -1,0 +1,22 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title> Elm Bus App </title>
+  <script type="text/javascript" src="elm.js"></script>
+</head>
+
+<body>
+<script type="text/javascript">
+var token = sessionStorage.creds || "nil";
+var app = Elm.Main.fullscreen(token);
+
+app.ports.setToken.subscribe(function(string) {
+	sessionStorage.setItem('creds', string);
+});
+
+
+</script>
+</body>
+</html>
