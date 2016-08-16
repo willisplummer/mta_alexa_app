@@ -77,6 +77,17 @@ def get_default_stop(user)
   user.stops.where(default: true).first || user.stops.first
 end
 
+get '/elm' do
+  File.read(File.join('public', 'index.html'))
+end
+
+post '/endpoint.json' do
+  content_type :json
+  p params
+  # request_json = JSON.parse(request.body.read.to_s)
+  { token: "TOKEN" }.to_json
+end
+
 enable :sessions
 
 def check_logged_in
