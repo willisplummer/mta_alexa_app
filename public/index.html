@@ -9,11 +9,17 @@
 
 <body>
 <script type="text/javascript">
-var token = sessionStorage.creds || "nil";
+var token = sessionStorage.creds || null;
+var key = "creds";
 var app = Elm.Main.fullscreen(token);
 
-app.ports.setToken.subscribe(function(string) {
-	sessionStorage.setItem('creds', string);
+app.ports.setToken.subscribe(function(tokenOrNull) {
+  if (tokenOrNull) {
+    sessionStorage.setItem(key, tokenOrNull);
+  }
+  else {
+    sessionStorage.removeItem(key);
+  }
 });
 
 

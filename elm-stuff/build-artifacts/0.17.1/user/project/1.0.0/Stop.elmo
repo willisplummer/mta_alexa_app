@@ -1,0 +1,200 @@
+var _user$project$Stop$subscriptions = function (model) {
+	return _elm_lang$core$Platform_Sub$none;
+};
+var _user$project$Stop$displayDefaultHelper = function (model) {
+	return model.$default ? ' (Default)' : '';
+};
+var _user$project$Stop$update = F2(
+	function (msg, model) {
+		var _p0 = msg;
+		switch (_p0.ctor) {
+			case 'Name':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{name: _p0._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'MtaStopId':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{mtaStopId: _p0._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'Default':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{$default: _p0._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'ChangeView':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{view: _p0._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			default:
+				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+		}
+	});
+var _user$project$Stop$Model = F4(
+	function (a, b, c, d) {
+		return {mtaStopId: a, name: b, $default: c, view: d};
+	});
+var _user$project$Stop$Remove = {ctor: 'Remove'};
+var _user$project$Stop$ChangeView = function (a) {
+	return {ctor: 'ChangeView', _0: a};
+};
+var _user$project$Stop$Default = function (a) {
+	return {ctor: 'Default', _0: a};
+};
+var _user$project$Stop$MtaStopId = function (a) {
+	return {ctor: 'MtaStopId', _0: a};
+};
+var _user$project$Stop$Name = function (a) {
+	return {ctor: 'Name', _0: a};
+};
+var _user$project$Stop$Show = {ctor: 'Show'};
+var _user$project$Stop$editStopView = function (model) {
+	return A2(
+		_elm_lang$html$Html$div,
+		_elm_lang$core$Native_List.fromArray(
+			[]),
+		_elm_lang$core$Native_List.fromArray(
+			[
+				A2(
+				_elm_lang$html$Html$input,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html_Attributes$type$('text'),
+						_elm_lang$html$Html_Attributes$placeholder('MTA STOP ID'),
+						_elm_lang$html$Html_Attributes$value(model.mtaStopId),
+						_elm_lang$html$Html_Events$onInput(_user$project$Stop$MtaStopId)
+					]),
+				_elm_lang$core$Native_List.fromArray(
+					[])),
+				A2(
+				_elm_lang$html$Html$br,
+				_elm_lang$core$Native_List.fromArray(
+					[]),
+				_elm_lang$core$Native_List.fromArray(
+					[])),
+				A2(
+				_elm_lang$html$Html$input,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html_Attributes$type$('text'),
+						_elm_lang$html$Html_Attributes$placeholder('Stop Nickname'),
+						_elm_lang$html$Html_Attributes$value(model.name),
+						_elm_lang$html$Html_Events$onInput(_user$project$Stop$Name)
+					]),
+				_elm_lang$core$Native_List.fromArray(
+					[])),
+				A2(
+				_elm_lang$html$Html$br,
+				_elm_lang$core$Native_List.fromArray(
+					[]),
+				_elm_lang$core$Native_List.fromArray(
+					[])),
+				A2(
+				_elm_lang$html$Html$button,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html_Events$onClick(
+						_user$project$Stop$ChangeView(_user$project$Stop$Show))
+					]),
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html$text('Submit')
+					]))
+			]));
+};
+var _user$project$Stop$Edit = {ctor: 'Edit'};
+var _user$project$Stop$initialModel = {mtaStopId: '', name: '', $default: false, view: _user$project$Stop$Edit};
+var _user$project$Stop$showStopView = function (model) {
+	return A2(
+		_elm_lang$html$Html$div,
+		_elm_lang$core$Native_List.fromArray(
+			[]),
+		_elm_lang$core$Native_List.fromArray(
+			[
+				A2(
+				_elm_lang$html$Html$div,
+				_elm_lang$core$Native_List.fromArray(
+					[]),
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html$text(
+						A2(
+							_elm_lang$core$Basics_ops['++'],
+							model.name,
+							A2(
+								_elm_lang$core$Basics_ops['++'],
+								' (',
+								A2(
+									_elm_lang$core$Basics_ops['++'],
+									model.mtaStopId,
+									A2(
+										_elm_lang$core$Basics_ops['++'],
+										')',
+										_user$project$Stop$displayDefaultHelper(model))))))
+					])),
+				A2(
+				_elm_lang$html$Html$input,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html_Attributes$type$('checkbox'),
+						_elm_lang$html$Html_Attributes$checked(model.$default),
+						_elm_lang$html$Html_Events$onCheck(_user$project$Stop$Default)
+					]),
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html$text('default?')
+					])),
+				A2(
+				_elm_lang$html$Html$button,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html_Events$onClick(
+						_user$project$Stop$ChangeView(_user$project$Stop$Edit))
+					]),
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html$text('Edit')
+					])),
+				A2(
+				_elm_lang$html$Html$button,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html_Events$onClick(_user$project$Stop$Remove)
+					]),
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html$text('remove')
+					]))
+			]));
+};
+var _user$project$Stop$view = function (model) {
+	var _p1 = model.view;
+	if (_p1.ctor === 'Show') {
+		return _user$project$Stop$showStopView(model);
+	} else {
+		return _user$project$Stop$editStopView(model);
+	}
+};
+var _user$project$Stop$main = {
+	main: _elm_lang$html$Html_App$program(
+		{
+			init: {ctor: '_Tuple2', _0: _user$project$Stop$initialModel, _1: _elm_lang$core$Platform_Cmd$none},
+			view: _user$project$Stop$view,
+			update: _user$project$Stop$update,
+			subscriptions: _user$project$Stop$subscriptions
+		})
+};

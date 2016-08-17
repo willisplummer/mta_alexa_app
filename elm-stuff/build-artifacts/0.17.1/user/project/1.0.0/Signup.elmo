@@ -1,0 +1,232 @@
+var _user$project$Signup$renderHome = function (model) {
+	return A2(
+		_elm_lang$html$Html$div,
+		_elm_lang$core$Native_List.fromArray(
+			[]),
+		_elm_lang$core$Native_List.fromArray(
+			[
+				A2(
+				_elm_lang$html$Html$img,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html_Attributes$src('http://i.ndtvimg.com/i/2015-07/minion-gabbar_470x471_51437144751.jpg')
+					]),
+				_elm_lang$core$Native_List.fromArray(
+					[])),
+				A2(
+				_elm_lang$html$Html$div,
+				_elm_lang$core$Native_List.fromArray(
+					[]),
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html$text(
+						A2(
+							_elm_lang$core$Basics_ops['++'],
+							'welcome home, ',
+							A2(
+								_elm_lang$core$Basics_ops['++'],
+								model.email,
+								A2(_elm_lang$core$Basics_ops['++'], ', it\'s been a minute.. also your password is ', model.password))))
+					]))
+			]));
+};
+var _user$project$Signup$validatedInput = F2(
+	function (list, error) {
+		var errorFields = function () {
+			var _p0 = error;
+			if (_p0.ctor === 'Just') {
+				return _elm_lang$core$Native_List.fromArray(
+					[
+						A2(
+						_elm_lang$html$Html$div,
+						_elm_lang$core$Native_List.fromArray(
+							[
+								_elm_lang$html$Html_Attributes$class('validation-error'),
+								_elm_lang$html$Html_Attributes$style(
+								_elm_lang$core$Native_List.fromArray(
+									[
+										{ctor: '_Tuple2', _0: 'color', _1: 'red'}
+									]))
+							]),
+						_elm_lang$core$Native_List.fromArray(
+							[
+								_elm_lang$html$Html$text(_p0._0)
+							]))
+					]);
+			} else {
+				return _elm_lang$core$Native_List.fromArray(
+					[]);
+			}
+		}();
+		var inputFields = A2(
+			_elm_lang$core$List$concatMap,
+			function (_p1) {
+				var _p2 = _p1;
+				return _elm_lang$core$Native_List.fromArray(
+					[
+						A2(
+						_elm_lang$html$Html$input,
+						_elm_lang$core$Native_List.fromArray(
+							[
+								_elm_lang$html$Html_Attributes$type$(_p2._1),
+								_elm_lang$html$Html_Attributes$placeholder(_p2._0),
+								_elm_lang$html$Html_Events$onInput(_p2._2)
+							]),
+						_elm_lang$core$Native_List.fromArray(
+							[]))
+					]);
+			},
+			list);
+		return A2(_elm_lang$core$Basics_ops['++'], inputFields, errorFields);
+	});
+var _user$project$Signup$decodeResponse = A2(
+	_elm_lang$core$Json_Decode$at,
+	_elm_lang$core$Native_List.fromArray(
+		['email']),
+	_elm_lang$core$Json_Decode$string);
+var _user$project$Signup$isValid = function (model) {
+	return _elm_lang$core$Native_Utils.eq(model.errors.email, _elm_lang$core$Maybe$Nothing) && _elm_lang$core$Native_Utils.eq(model.errors.password, _elm_lang$core$Maybe$Nothing);
+};
+var _user$project$Signup$validate = function (model) {
+	var newErrors = {
+		email: _elm_lang$core$String$isEmpty(model.email) ? _elm_lang$core$Maybe$Just('Enter an email address') : _elm_lang$core$Maybe$Nothing,
+		password: _elm_lang$core$String$isEmpty(model.password) ? _elm_lang$core$Maybe$Just('Enter a password!') : (_elm_lang$core$String$isEmpty(model.passwordAgain) ? _elm_lang$core$Maybe$Just('Please re-enter your password!') : ((!_elm_lang$core$Native_Utils.eq(model.password, model.passwordAgain)) ? _elm_lang$core$Maybe$Just('Passwords don\'t match') : _elm_lang$core$Maybe$Nothing))
+	};
+	return _elm_lang$core$Native_Utils.update(
+		model,
+		{errors: newErrors});
+};
+var _user$project$Signup$Model = F5(
+	function (a, b, c, d, e) {
+		return {email: a, password: b, passwordAgain: c, response: d, errors: e};
+	});
+var _user$project$Signup$Errors = F2(
+	function (a, b) {
+		return {email: a, password: b};
+	});
+var _user$project$Signup$initialErrors = A2(_user$project$Signup$Errors, _elm_lang$core$Maybe$Nothing, _elm_lang$core$Maybe$Nothing);
+var _user$project$Signup$model = A5(_user$project$Signup$Model, '', '', '', '', _user$project$Signup$initialErrors);
+var _user$project$Signup$init = _user$project$Signup$model;
+var _user$project$Signup$FailureToMessage = function (a) {
+	return {ctor: 'FailureToMessage', _0: a};
+};
+var _user$project$Signup$SuccessToMessage = function (a) {
+	return {ctor: 'SuccessToMessage', _0: a};
+};
+var _user$project$Signup$submitData = function (model) {
+	var url = 'http://jsonplaceholder.typicode.com/users/1';
+	return A3(
+		_elm_lang$core$Task$perform,
+		_user$project$Signup$FailureToMessage,
+		_user$project$Signup$SuccessToMessage,
+		A2(_evancz$elm_http$Http$get, _user$project$Signup$decodeResponse, url));
+};
+var _user$project$Signup$update = F2(
+	function (msg, model) {
+		var _p3 = msg;
+		switch (_p3.ctor) {
+			case 'Email':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{email: _p3._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'Password':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{password: _p3._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'PasswordAgain':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{passwordAgain: _p3._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'Validate':
+				var newModel = _user$project$Signup$validate(model);
+				var cmd = _user$project$Signup$isValid(newModel) ? _user$project$Signup$submitData(newModel) : _elm_lang$core$Platform_Cmd$none;
+				return {ctor: '_Tuple2', _0: newModel, _1: cmd};
+			case 'SuccessToMessage':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{response: _p3._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			default:
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{response: 'ERROR!'}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+		}
+	});
+var _user$project$Signup$Validate = {ctor: 'Validate'};
+var _user$project$Signup$PasswordAgain = function (a) {
+	return {ctor: 'PasswordAgain', _0: a};
+};
+var _user$project$Signup$Password = function (a) {
+	return {ctor: 'Password', _0: a};
+};
+var _user$project$Signup$Email = function (a) {
+	return {ctor: 'Email', _0: a};
+};
+var _user$project$Signup$view = function (model) {
+	var body = A2(
+		_elm_lang$core$Basics_ops['++'],
+		A2(
+			_user$project$Signup$validatedInput,
+			_elm_lang$core$Native_List.fromArray(
+				[
+					{ctor: '_Tuple3', _0: 'Email', _1: 'text', _2: _user$project$Signup$Email}
+				]),
+			model.errors.email),
+		A2(
+			_elm_lang$core$Basics_ops['++'],
+			A2(
+				_user$project$Signup$validatedInput,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						{ctor: '_Tuple3', _0: 'Password', _1: 'password', _2: _user$project$Signup$Password},
+						{ctor: '_Tuple3', _0: 'Re-enter Password', _1: 'password', _2: _user$project$Signup$PasswordAgain}
+					]),
+				model.errors.password),
+			_elm_lang$core$Native_List.fromArray(
+				[
+					A2(
+					_elm_lang$html$Html$button,
+					_elm_lang$core$Native_List.fromArray(
+						[
+							_elm_lang$html$Html_Events$onClick(_user$project$Signup$Validate)
+						]),
+					_elm_lang$core$Native_List.fromArray(
+						[
+							_elm_lang$html$Html$text('Submit')
+						])),
+					A2(
+					_elm_lang$html$Html$div,
+					_elm_lang$core$Native_List.fromArray(
+						[
+							_elm_lang$html$Html_Attributes$class('response')
+						]),
+					_elm_lang$core$Native_List.fromArray(
+						[
+							_elm_lang$html$Html$text(model.response)
+						]))
+				])));
+	return A2(
+		_elm_lang$html$Html$div,
+		_elm_lang$core$Native_List.fromArray(
+			[]),
+		body);
+};

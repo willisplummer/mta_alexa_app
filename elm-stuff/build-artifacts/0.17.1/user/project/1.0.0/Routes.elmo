@@ -1,0 +1,28 @@
+var _user$project$Routes$update = F2(
+	function (msg, model) {
+		var newModel = function () {
+			var _p0 = msg;
+			switch (_p0.ctor) {
+				case 'SignupPage':
+					return 'SignupPage';
+				case 'LoginPage':
+					return 'LoginPage';
+				default:
+					return 'HomePage';
+			}
+		}();
+		return _elm_lang$core$Native_Utils.update(
+			model,
+			{route: newModel});
+	});
+var _user$project$Routes$navigate = F2(
+	function (model, destination) {
+		return A2(_user$project$Routes$update, destination, model);
+	});
+var _user$project$Routes$model = {route: 'SignupPage'};
+var _user$project$Routes$Model = function (a) {
+	return {route: a};
+};
+var _user$project$Routes$HomePage = {ctor: 'HomePage'};
+var _user$project$Routes$LoginPage = {ctor: 'LoginPage'};
+var _user$project$Routes$SignupPage = {ctor: 'SignupPage'};
