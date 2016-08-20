@@ -1,10 +1,11 @@
 port module Main exposing (..)
 
+import Navigation exposing (..)
+import Authenticate exposing (..)
+import Routing exposing (..)
 import Html exposing (..)
 import Html.App as App exposing (..)
 import Html.Events exposing (onClick)
-import Signup
-import Routes
 import StopsList
 import Http
 import Json.Decode as Json
@@ -15,9 +16,52 @@ import Task
 --
 
 
-main : Program (Maybe String)
+main : Program ( Maybe String, Maybe String )
 main =
-    App.programWithFlags { init = init, subscriptions = subscriptions, view = view, update = update }
+    Navigation.programWithFlags Routing.parser
+        { init = init
+        , subscriptions = subscriptions
+        , view = view
+        , urlUpdate = urlUpdate
+        , update = update
+        }
+
+
+
+-- init
+
+
+init : ( Maybe String, Maybe String ) -> Result String Route -> ( Model, Cmd Msg )
+init ( token, email ) result =
+    let
+        ( list, listMsgs ) =
+            StopsList.init
+
+        ( authenticate, authenticateMsgs ) =
+            Authenticate.init (Authenticate.ActiveUserCreds token email)
+
+        currentRoute =
+            routeFromResult result
+    in
+        ( { authentication = authenticate, stopsList = list, route = currentRoute, token = token }
+        , Cmd.batch
+            [ Cmd.map StopsList listMsgs
+            , Cmd.map Authenticate authenticateMsgs
+            ]
+        )
+
+
+
+-- urlUpdate
+
+
+urlUpdate : Result String Route -> Model -> ( Model, Cmd Msg )
+urlUpdate result model =
+    let
+        currentRoute =
+            Routing.routeFromResult result
+    in
+        ( { model | route = currentRoute }, Cmd.none )
 
 
 
@@ -25,9 +69,9 @@ main =
 
 
 type alias Model =
-    { signUp : Signup.Model
+    { authentication : Authenticate.Model
     , stopsList : StopsList.Model
-    , page : Routes.Model
+    , route : Routing.Route
     , token : Maybe String
     }
 
@@ -36,19 +80,6 @@ type Page
     = SignUpPage
     | LoginPage
     | HomePage
-
-
-init : Maybe String -> ( Model, Cmd Msg )
-init token =
-    let
-        ( list, listMsgs ) =
-            StopsList.init
-    in
-        ( { signUp = Signup.init, stopsList = list, page = Routes.model, token = token }
-        , Cmd.batch
-            [ Cmd.map StopsList listMsgs
-            ]
-        )
 
 
 
@@ -74,6 +105,7 @@ type Msg
     | FetchFail Http.Error
     | FetchSucceed String
     | Logout
+    | Authenticate Authenticate.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -105,19 +137,28 @@ update msg model =
         FetchSucceed token ->
             ( { model | token = Just token }, setToken (Just token) )
 
+        Authenticate subMsg ->
+            let
+                ( authenticate, authenticateCmds ) =
+                    Authenticate.update subMsg model.authentication
+            in
+                ( { model | authentication = authenticate }
+                , Cmd.map Authenticate authenticateCmds
+                )
+
 
 loginEndpoint : model -> Cmd Msg
 loginEndpoint model =
     let
         url =
-            "http://localhost:4567/endpoint.json"
+            "http://localhost:4567/elm-login.json"
 
         body =
             Http.stringData "user"
                 (JS.encode 0
                     (JS.object
                         [ ( "email", JS.string "willisplummer@gmail.com" )
-                        , ( "password", JS.string "testpw" )
+                        , ( "password", JS.string "testtest" )
                         ]
                     )
                 )
@@ -136,20 +177,20 @@ decodeLoginResponse =
 
 view : Model -> Html Msg
 view model =
-    let
-        tokenText =
-            case model.token of
-                Just token ->
-                    token
+    case model.route of
+        LoginRoute ->
+            --Login.view
+            div [] [ text "Login" ]
 
-                Nothing ->
-                    "logged out"
-    in
-        div []
-            [ button [ onClick (Login) ] [ text "Get a token" ]
-            , button [ onClick (Logout) ] [ text "Logout" ]
-            , text tokenText
-            , App.map
+        SignupRoute ->
+            App.map
+                (\msg -> Authenticate msg)
+                (Authenticate.view model.authentication)
+
+        HomeRoute ->
+            App.map
                 (\msg -> StopsList msg)
                 (StopsList.view model.stopsList)
-            ]
+
+        NotFoundRoute ->
+            div [] [ text "NOT FOUND" ]

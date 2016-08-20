@@ -1,25 +1,35 @@
-module Signup exposing (Model, Msg, init, update, view)
+module Signup exposing (..)
 
 import Html exposing (..)
+import Html.App as App
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
 import Html.Events exposing (onClick)
 import Http
-import Json.Decode as Json
+import Json.Decode as Json exposing ((:=))
+import Json.Encode as JS
 import Task
 import String exposing (isEmpty)
 import List exposing (map, concat, concatMap)
 
 
---import Routes
 -- MODEL
+
+
+main =
+    App.program
+        { init = init
+        , view = view
+        , update = update
+        , subscriptions = subscriptions
+        }
 
 
 type alias Model =
     { email : String
     , password : String
     , passwordAgain : String
-    , response : String
+    , token : Maybe String
     , errors : Errors
     }
 
@@ -27,22 +37,23 @@ type alias Model =
 type alias Errors =
     { email : Maybe String
     , password : Maybe String
+    , server : List String
     }
 
 
 initialErrors : Errors
 initialErrors =
-    Errors Nothing Nothing
+    Errors Nothing Nothing []
 
 
-model : Model
-model =
-    Model "" "" "" "" initialErrors
+initialModel : Model
+initialModel =
+    Model "" "" "" Nothing initialErrors
 
 
-init : Model
+init : ( Model, Cmd Msg )
 init =
-    model
+    ( initialModel, Cmd.none )
 
 
 
@@ -54,8 +65,8 @@ type Msg
     | Password String
     | PasswordAgain String
     | Validate
-    | SuccessToMessage String
-    | FailureToMessage Http.Error
+    | FetchSucceed ( Maybe String, List String )
+    | FetchFail Http.Error
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -97,16 +108,18 @@ update msg model =
                 , cmd
                 )
 
-        SuccessToMessage response ->
+        FetchSucceed ( token, errors ) ->
             ( { model
-                | response = response
+                | token = token
+                , errors = Errors Nothing Nothing errors
               }
             , Cmd.none
             )
 
-        FailureToMessage response ->
+        FetchFail token ->
             ( { model
-                | response = "ERROR!"
+                | token = Nothing
+                , errors = { email = Just "", password = Just "", server = [ "there was a problem connecting to the server. please try again." ] }
               }
             , Cmd.none
             )
@@ -130,6 +143,8 @@ validate model =
                     Just "Passwords don't match"
                 else
                     Nothing
+            , server =
+                []
             }
     in
         { model | errors = newErrors }
@@ -148,14 +163,29 @@ submitData : Model -> Cmd Msg
 submitData model =
     let
         url =
-            "http://jsonplaceholder.typicode.com/users/1"
+            "http://localhost:4567/elm-signup.json"
+
+        body =
+            Http.stringData "user"
+                (JS.encode 0
+                    (JS.object
+                        [ ( "email", JS.string model.email )
+                        , ( "pw", JS.string model.password )
+                        , ( "pw2", JS.string model.passwordAgain )
+                        ]
+                    )
+                )
     in
-        Task.perform FailureToMessage SuccessToMessage (Http.get decodeResponse url)
+        Task.perform FetchFail FetchSucceed (Http.post decodeSignUpResponse url (Http.multipart [ body ]))
 
 
-decodeResponse : Json.Decoder String
-decodeResponse =
-    Json.at [ "email" ] Json.string
+decodeSignUpResponse : Json.Decoder ( Maybe String, List String )
+decodeSignUpResponse =
+    Json.object2 (,)
+        (Json.maybe
+            ("token" := Json.string)
+        )
+        ("errors" := Json.list Json.string)
 
 
 
@@ -165,11 +195,31 @@ decodeResponse =
 view : Model -> Html Msg
 view model =
     let
+        tokenText =
+            case model.token of
+                Just token ->
+                    token
+
+                Nothing ->
+                    "nothing here"
+
+        serverErrors =
+            if List.isEmpty model.errors.server then
+                []
+            else
+                List.map (\str -> text str) model.errors.server
+
         body =
             validatedInput [ ( "Email", "text", Email ) ] model.errors.email
                 ++ validatedInput [ ( "Password", "password", Password ), ( "Re-enter Password", "password", PasswordAgain ) ] model.errors.password
                 ++ [ button [ onClick Validate ] [ text "Submit" ]
-                   , div [ class "response" ] [ text model.response ]
+                   , div [ class "response" ] [ text tokenText ]
+                   ]
+                ++ serverErrors
+                ++ [ div []
+                        [ text "already have an account? you can always just "
+                        , a [ href "#login" ] [ text "login" ]
+                        ]
                    ]
     in
         div [] body
@@ -192,9 +242,10 @@ validatedInput list error =
         inputFields ++ errorFields
 
 
-renderHome : Model -> Html Msg
-renderHome model =
-    div []
-        [ img [ src "http://i.ndtvimg.com/i/2015-07/minion-gabbar_470x471_51437144751.jpg" ] []
-        , div [] [ text ("welcome home, " ++ model.email ++ ", it's been a minute.. also your password is " ++ model.password) ]
-        ]
+
+-- Subscriptions
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.none

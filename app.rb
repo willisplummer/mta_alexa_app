@@ -73,10 +73,6 @@ def handle_request(request, user, response)
   end
 end
 
-def get_default_stop(user)
-  user.stops.where(default: true).first || user.stops.first
-end
-
 get '/elm' do
   File.read(File.join('public', 'index.html'))
 end
@@ -88,161 +84,44 @@ post '/endpoint.json' do
   { token: "TOKEN" }.to_json
 end
 
-enable :sessions
-
-def check_logged_in
-  redirect to('/signup') unless logged_in?
-end
-
-def check_logged_out
-  redirect to('/home') if logged_in?
-end
-
-def logged_in?
-  true if session[:user_id]
-end
-
-get '/' do
-  check_logged_in
-  redirect to('/home')
-end
-
-get '/signup' do
-  check_logged_out
-  haml :signup
-end
-
-post '/signup' do
-  check_logged_out
-  user = User.new(email: params[:email], password: params[:pw1], password_confirmation: params[:pw2])
+post '/elm-signup.json' do
+  content_type :json
+  creds = JSON.parse(params["user"])
+  user = User.new(email: creds["email"], password: creds["pw"], password_confirmation: creds["pw2"])
   if user.save
-    session[:user_id] = user.id
-    redirect to('/activate')
+    token = loop do
+      random_token = SecureRandom.urlsafe_base64(nil, false)
+      break random_token unless Token.exists?(token_string: random_token)
+    end
+
+    if user.tokens.new(token_string: token).save
+      { token: token, errors: [] }.to_json
+    else
+      { token: nil, errors: ["Error: problem generating token"] }.to_json
+    end
+
   else
-    haml :signup, locals: {email: user.email, signup_errors: user.errors.full_messages}
+    p user.errors
+    { token: nil, errors: user.errors.full_messages }.to_json
   end
 end
 
-get '/activate' do
-  check_logged_in
-  activate_errors = session[:activate_errors]
-  session.delete(:activate_errors)
-  haml :activate, locals: {activate_errors: activate_errors}
-end
+post '/elm-login.json' do
+  content_type :json
+  creds = JSON.parse(params["user"])
+  p user = User.find_by(email: creds["email"])
+  if user && user.authenticate(creds["password"])
+    token = loop do
+      random_token = SecureRandom.urlsafe_base64(nil, false)
+      break random_token unless Token.exists?(token_string: random_token)
+    end
 
-post '/activate' do
-  check_logged_in
-  alexa = Alexa.find_by(activation_key: params[:activationcode])
-  if alexa && alexa.user_id.nil?
-    alexa.update(user_id: session[:user_id])
-    redirect to('/home')
-  elsif alexa && alexa.user_id == session[:user_id]
-    session[:activate_errors] = ["This device is already tied to your account"]
-    redirect back
-  elsif alexa
-    session[:activate_errors] = ["This device is already tied to a different account"]
-    redirect back
+    if user.tokens.new(token_string: token).save
+      { token: token, stops: user.stops }.to_json
+    else
+      { token: nil, errors: "Error: problem generating token" }.to_json
+    end
   else
-    session[:activate_errors] = ["Code not found. Ask alexa for a new code."]
-    redirect back
+    { token: nil, errors: "Error: invalid login credentials" }.to_json
   end
-end
-
-get '/login' do
-  check_logged_out
-  haml :login
-end
-
-post '/login' do
-  check_logged_out
-  user = User.find_by(email: params[:email])
-  if user && user.authenticate(params[:pw])
-    session[:user_id] = user.id
-    redirect to('/home')
-  else
-    haml :login, locals: {errors: ["Error: invalid login credentials"]}
-  end
-end
-
-get '/logout' do
-  session.clear
-  redirect to('/login')
-end
-
-get '/home' do
-  check_logged_in
-  @user = User.find(session[:user_id])
-  @stops = @user.stops
-  @devices = @user.alexas
-  @default_stop = get_default_stop(@user)
-
-  #get error messages about activating alexa device
-  #and clear them from the session
-  activate_errors = session[:activate_errors]
-  session.delete(:activate_errors)
-
-  #get error messages about adding a new stop
-  #and clear them from the session
-  add_stop_errors = session[:add_stop_errors]
-  session.delete(:add_stop_errors)
-
-  haml :loggedin, locals: {activate_errors: activate_errors, add_stop_errors: add_stop_errors}
-end
-
-get '/addstop' do
-  check_logged_in
-  add_stop_errors = session[:add_stop_errors]
-  session.delete(:add_stop_errors)
-  haml :addstop, locals: {add_stop_errors: add_stop_errors}
-end
-
-post '/addstop' do
-  check_logged_in
-  stop = Stop.new(name: params[:stop_name], mta_stop_id: params[:mta_stop_id], user_id: session[:user_id])
-  mta_record = GTFS::ORM::Stop.where(stop_id: stop.mta_stop_id.to_s).first
-  if mta_record && stop.save
-    stop.make_default if params[:default_stop]
-    redirect to('/home')
-  elsif mta_record
-    session[:add_stop_errors] = stop.errors.full_messages
-    redirect back
-  else
-    session[:add_stop_errors] = stop.errors.full_messages
-    session[:add_stop_errors] << "Stop ID does not exist"
-    redirect back
-  end
-end
-
-delete '/stops/:id' do |id|
-  check_logged_in
-  if s = Stop.find(id)
-    s.destroy
-  end
-  redirect back
-end
-
-post '/stops/:id' do |id|
-  check_logged_in
-  stop = Stop.find(id)
-  user = User.find(session[:user_id])
-  if stop == get_default_stop(user)
-    p "Already default stop"
-    halt 409
-  elsif stop && stop.user_id == session[:user_id]
-    stop.make_default
-    halt 200
-  elsif stop
-    p "ERROR: user attempting to set default stop which doesn't belong to them"
-    halt 403
-  else
-    p "ERROR: stop does not exist"
-  end
-end
-
-delete '/devices/:id' do |id|
-  check_logged_in
-  if d = Alexa.find(id)
-    d.destroy
-  end
-  redirect back
 end

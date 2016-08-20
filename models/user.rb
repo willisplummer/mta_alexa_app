@@ -1,6 +1,7 @@
 class User < ActiveRecord::Base
   has_many :stops, dependent: :destroy
   has_many :alexas, dependent: :destroy
+  has_many :tokens, dependent: :destroy
   has_secure_password
 
   validates :email, presence: true, uniqueness: true

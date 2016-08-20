@@ -9,9 +9,12 @@
 
 <body>
 <script type="text/javascript">
-var token = sessionStorage.creds || null;
-var key = "creds";
-var app = Elm.Main.fullscreen(token);
+var token = sessionStorage.token || null;
+var email = sessionStorage.email || null;
+var tuple = [token, email]
+var tokenKey = "token";
+var emailKey = "email";
+var app = Elm.Main.fullscreen(tuple);
 
 app.ports.setToken.subscribe(function(tokenOrNull) {
   if (tokenOrNull) {
