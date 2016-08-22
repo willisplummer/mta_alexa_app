@@ -1,4 +1,4 @@
-module Authenticate exposing (..)
+port module Authenticate exposing (..)
 
 import Signup
 import Html exposing (..)
@@ -45,6 +45,7 @@ type Msg
     = Signup Signup.Msg
     | Logout
 
+port setToken : ActiveUserCreds -> Cmd msg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update message model =
@@ -53,16 +54,27 @@ update message model =
             let
                 ( signup, signupCmds ) =
                     Signup.update subMsg model.signup
+
+                response =
+                    case subMsg of
+                        Signup.FetchSucceed arguments ->
+                            ( {model | signup = signup, activeUser = {token = signup.token, email = Just signup.email}}
+                            , Cmd.batch
+                                [ Cmd.map Signup signupCmds
+                                , setToken {token = signup.token, email = Just signup.email}]
+                            )
+                        _ ->
+                            ( {model | signup = signup, activeUser = {token = Nothing, email = Nothing}}
+                            , Cmd.map Signup signupCmds
+                            )
+
             in
-                ( { model | signup = signup }
-                , Cmd.map Signup signupCmds
-                )
+                response
 
         Logout ->
             ( { model | activeUser = ActiveUserCreds Nothing Nothing }
-            , Cmd.none
+            , setToken model.activeUser
             )
-
 
 view : Model -> Html Msg
 view model =

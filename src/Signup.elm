@@ -11,6 +11,7 @@ import Json.Encode as JS
 import Task
 import String exposing (isEmpty)
 import List exposing (map, concat, concatMap)
+import Platform.Cmd exposing ((!))
 
 
 -- MODEL
@@ -155,7 +156,6 @@ isValid model =
     model.errors.email == Nothing && model.errors.password == Nothing
 
 
-
 -- HTTP
 
 
@@ -195,14 +195,6 @@ decodeSignUpResponse =
 view : Model -> Html Msg
 view model =
     let
-        tokenText =
-            case model.token of
-                Just token ->
-                    token
-
-                Nothing ->
-                    "nothing here"
-
         serverErrors =
             if List.isEmpty model.errors.server then
                 []
@@ -213,7 +205,6 @@ view model =
             validatedInput [ ( "Email", "text", Email ) ] model.errors.email
                 ++ validatedInput [ ( "Password", "password", Password ), ( "Re-enter Password", "password", PasswordAgain ) ] model.errors.password
                 ++ [ button [ onClick Validate ] [ text "Submit" ]
-                   , div [ class "response" ] [ text tokenText ]
                    ]
                 ++ serverErrors
                 ++ [ div []

@@ -1,4 +1,4 @@
-port module Main exposing (..)
+module Main exposing (..)
 
 import Navigation exposing (..)
 import Authenticate exposing (..)
@@ -94,17 +94,8 @@ subscriptions model =
 
 -- UPDATE
 
-
-port setToken : Maybe String -> Cmd msg
-
-
 type Msg
     = StopsList StopsList.Msg
-    | SetSessionToken (Maybe String)
-    | Login
-    | FetchFail Http.Error
-    | FetchSucceed String
-    | Logout
     | Authenticate Authenticate.Msg
 
 
@@ -120,23 +111,6 @@ update msg model =
                 , Cmd.map StopsList listCmds
                 )
 
-        SetSessionToken token ->
-            ( model
-            , setToken token
-            )
-
-        Login ->
-            ( model, loginEndpoint model )
-
-        Logout ->
-            ( { model | token = Nothing }, setToken Nothing )
-
-        FetchFail _ ->
-            ( model, Cmd.none )
-
-        FetchSucceed token ->
-            ( { model | token = Just token }, setToken (Just token) )
-
         Authenticate subMsg ->
             let
                 ( authenticate, authenticateCmds ) =
@@ -145,32 +119,6 @@ update msg model =
                 ( { model | authentication = authenticate }
                 , Cmd.map Authenticate authenticateCmds
                 )
-
-
-loginEndpoint : model -> Cmd Msg
-loginEndpoint model =
-    let
-        url =
-            "http://localhost:4567/elm-login.json"
-
-        body =
-            Http.stringData "user"
-                (JS.encode 0
-                    (JS.object
-                        [ ( "email", JS.string "willisplummer@gmail.com" )
-                        , ( "password", JS.string "testtest" )
-                        ]
-                    )
-                )
-    in
-        Task.perform FetchFail FetchSucceed (Http.post decodeLoginResponse url (Http.multipart [ body ]))
-
-
-decodeLoginResponse : Json.Decoder String
-decodeLoginResponse =
-    Json.at [ "token" ] Json.string
-
-
 
 -- VIEW
 
