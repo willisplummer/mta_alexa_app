@@ -110,18 +110,21 @@ post '/elm-login.json' do
   content_type :json
   creds = JSON.parse(params["user"])
   p user = User.find_by(email: creds["email"])
-  if user && user.authenticate(creds["password"])
+  p "gonna try it"
+  if user && user.authenticate(creds["pw"])
+    p "~~~~authenticated~~~~"
     token = loop do
       random_token = SecureRandom.urlsafe_base64(nil, false)
       break random_token unless Token.exists?(token_string: random_token)
     end
 
     if user.tokens.new(token_string: token).save
-      { token: token, stops: user.stops }.to_json
+      { token: token, errors: nil }.to_json
     else
       { token: nil, errors: "Error: problem generating token" }.to_json
     end
   else
+    p "didn't authenticate"
     { token: nil, errors: "Error: invalid login credentials" }.to_json
   end
 end

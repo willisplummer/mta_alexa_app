@@ -25,13 +25,13 @@ type alias Model =
 type alias Errors =
     { email : Maybe String
     , password : Maybe String
-    , server : List String
+    , server : Maybe String
     }
 
 
 initialErrors : Errors
 initialErrors =
-    Errors Nothing Nothing []
+    Errors Nothing Nothing Nothing
 
 
 initialModel : Model
@@ -52,7 +52,7 @@ type Msg
     = Email String
     | Password String
     | Validate
-    | FetchSucceed ( Maybe String, List String )
+    | FetchSucceed ( Maybe String, Maybe String )
     | FetchFail Http.Error
 
 
@@ -99,7 +99,7 @@ update msg model =
         FetchFail token ->
             ( { model
                 | token = Nothing
-                , errors = { email = Nothing, password = Nothing, server = [ "there was a problem connecting to the server. please try again." ] }
+                , errors = { email = Nothing, password = Nothing, server = Just "there was a problem connecting to the server. please try again." }
               }
             , Cmd.none
             )
@@ -121,7 +121,7 @@ validate model =
                 else
                     Nothing
             , server =
-                []
+                Nothing
             }
     in
         { model | errors = newErrors }
@@ -152,16 +152,18 @@ submitData model =
                     )
                 )
     in
-        Task.perform FetchFail FetchSucceed (Http.post decodeSignUpResponse url (Http.multipart [ body ]))
+        Task.perform FetchFail FetchSucceed (Http.post decodeLoginResponse url (Http.multipart [ body ]))
 
 
-decodeSignUpResponse : Json.Decoder ( Maybe String, List String )
-decodeSignUpResponse =
+decodeLoginResponse : Json.Decoder ( Maybe String, Maybe String )
+decodeLoginResponse =
     Json.object2 (,)
         (Json.maybe
             ("token" := Json.string)
         )
-        ("errors" := Json.list Json.string)
+        (Json.maybe
+            ("errors" := Json.string)
+        )
 
 
 
@@ -172,12 +174,14 @@ view : Model -> Html Msg
 view model =
     let
         serverErrors =
-            if List.isEmpty model.errors.server then
-                []
-            else
-                [ div [ class "validation-error", style [ ( "color", "red " ) ] ]
-                    (List.map (\str -> text str) model.errors.server)
-                ]
+            case model.errors.server of
+                Just error ->
+                    [ div [ class "validation-error", style [ ( "color", "red " ) ] ]
+                        [ text error ]
+                    ]
+
+                Nothing ->
+                    []
 
         body =
             validatedInput [ ( "Email", "text", Email ) ] model.errors.email

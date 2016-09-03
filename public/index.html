@@ -17,9 +17,10 @@ var emailKey = "email";
 var app = Elm.Main.fullscreen(tuple);
 
 app.ports.setToken.subscribe(function(credsHash) {
-  console.log(credsHash);
-
-  if (credsHash["token"] && credsHash["email"]) {
+  if (credsHash == null ) {
+    return
+  }
+  else if (credsHash["token"] && credsHash["email"]) {
     sessionStorage.setItem(tokenKey, credsHash["token"]);
     sessionStorage.setItem(emailKey, credsHash["email"]);
   }
