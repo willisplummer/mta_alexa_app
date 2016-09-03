@@ -1,14 +1,21 @@
 port module Authenticate exposing (..)
 
 import Signup
+import Login
 import Html exposing (div, Html)
 import Html.App as App
 
 
 type alias Model =
     { signup : Signup.Model
+    , login : Login.Model
     , activeUser : Maybe ActiveUserCreds
     }
+
+
+type Display
+    = SignupView
+    | LoginView
 
 
 type alias ActiveUserCreds =
@@ -22,18 +29,24 @@ init creds =
     let
         ( signupModel, signupMsgs ) =
             Signup.init
+
+        ( loginModel, loginMsgs ) =
+            Login.init
     in
         ( { signup = signupModel
+          , login = Login.initialModel
           , activeUser = creds
           }
         , Cmd.batch
-            [ Cmd.map Signup signupMsgs ]
-          -- TODO: implement login here
+            [ Cmd.map Signup signupMsgs
+            , Cmd.map Login Cmd.none
+            ]
         )
 
 
 type Msg
     = Signup Signup.Msg
+    | Login Login.Msg
     | Logout
 
 
@@ -73,23 +86,51 @@ update message model =
             in
                 response
 
+        Login subMsg ->
+            let
+                ( login, loginCmds ) =
+                    Login.update subMsg model.login
+
+                creds =
+                    case login.token of
+                        Just token ->
+                            Just { token = token, email = login.email }
+
+                        Nothing ->
+                            Nothing
+
+                response =
+                    case subMsg of
+                        Login.FetchSucceed arguments ->
+                            ( { model | login = login, activeUser = creds }
+                            , Cmd.batch
+                                [ Cmd.map Login loginCmds
+                                , setToken creds
+                                ]
+                            )
+
+                        _ ->
+                            ( { model | login = login }
+                            , Cmd.map Login loginCmds
+                            )
+            in
+                response
+
         Logout ->
             ( { model | activeUser = Nothing }
             , setToken model.activeUser
             )
 
 
-view : Model -> Html Msg
-view model =
-    div []
-        [ App.map Signup (Signup.view model.signup)
-        ]
+view : Model -> Display -> Html Msg
+view model view =
+    case view of
+        SignupView ->
+            div []
+                [ App.map Signup (Signup.view model.signup)
+                ]
 
-
-
---
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.none
+        LoginView ->
+            div []
+                [ App.map Login (Login.view model.login)
+                ]

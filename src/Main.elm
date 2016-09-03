@@ -133,13 +133,14 @@ view : Model -> Html Msg
 view model =
     case model.route of
         LoginRoute ->
-            --Login.view
-            div [] [ text "Login" ]
+            App.map
+                (\msg -> Authenticate msg)
+                (Authenticate.view model.authentication Authenticate.LoginView)
 
         SignupRoute ->
             App.map
                 (\msg -> Authenticate msg)
-                (Authenticate.view model.authentication)
+                (Authenticate.view model.authentication Authenticate.SignupView)
 
         HomeRoute ->
             App.map

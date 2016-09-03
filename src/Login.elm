@@ -1,4 +1,4 @@
-module Signup exposing (..)
+module Login exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (href, type', placeholder, class, style)
@@ -17,7 +17,6 @@ import List exposing (map, concat, concatMap)
 type alias Model =
     { email : String
     , password : String
-    , passwordAgain : String
     , token : Maybe String
     , errors : Errors
     }
@@ -37,7 +36,7 @@ initialErrors =
 
 initialModel : Model
 initialModel =
-    Model "" "" "" Nothing initialErrors
+    Model "" "" Nothing initialErrors
 
 
 init : ( Model, Cmd Msg )
@@ -52,7 +51,6 @@ init =
 type Msg
     = Email String
     | Password String
-    | PasswordAgain String
     | Validate
     | FetchSucceed ( Maybe String, List String )
     | FetchFail Http.Error
@@ -71,13 +69,6 @@ update msg model =
         Password password ->
             ( { model
                 | password = password
-              }
-            , Cmd.none
-            )
-
-        PasswordAgain passwordAgain ->
-            ( { model
-                | passwordAgain = passwordAgain
               }
             , Cmd.none
             )
@@ -120,17 +111,13 @@ validate model =
         newErrors =
             { email =
                 if isEmpty model.email then
-                    Just "Enter an email address!"
+                    Just "Enter an email address"
                     -- TO DO: Validate email format
                 else
                     Nothing
             , password =
                 if isEmpty model.password then
-                    Just "Enter a password!"
-                else if isEmpty model.passwordAgain then
-                    Just "Please re-enter your password!"
-                else if model.password /= model.passwordAgain then
-                    Just "Passwords don't match"
+                    Just "Enter your password!"
                 else
                     Nothing
             , server =
@@ -153,7 +140,7 @@ submitData : Model -> Cmd Msg
 submitData model =
     let
         url =
-            "http://localhost:4567/elm-signup.json"
+            "http://localhost:4567/elm-login.json"
 
         body =
             Http.stringData "user"
@@ -161,7 +148,6 @@ submitData model =
                     (JS.object
                         [ ( "email", JS.string model.email )
                         , ( "pw", JS.string model.password )
-                        , ( "pw2", JS.string model.passwordAgain )
                         ]
                     )
                 )
@@ -195,13 +181,13 @@ view model =
 
         body =
             validatedInput [ ( "Email", "text", Email ) ] model.errors.email
-                ++ validatedInput [ ( "Password", "password", Password ), ( "Re-enter Password", "password", PasswordAgain ) ] model.errors.password
+                ++ validatedInput [ ( "Password", "password", Password ) ] model.errors.password
                 ++ [ button [ onClick Validate ] [ text "Submit" ]
                    ]
                 ++ serverErrors
                 ++ [ div []
-                        [ text "already have an account? you can always just "
-                        , a [ href "#login" ] [ text "login" ]
+                        [ text "want to create an account? you can always just "
+                        , a [ href "#signup" ] [ text "signup" ]
                         ]
                    ]
     in
