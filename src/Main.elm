@@ -1,16 +1,11 @@
 module Main exposing (..)
 
-import Navigation exposing (..)
-import Authenticate exposing (..)
+import Navigation
+import Authenticate
 import Routing exposing (..)
 import Html exposing (..)
-import Html.App as App exposing (..)
-import Html.Events exposing (onClick)
+import Html.App as App
 import StopsList
-import Http
-import Json.Decode as Json
-import Json.Encode as JS
-import Task
 
 
 --
@@ -37,8 +32,16 @@ init ( token, email ) result =
         ( list, listMsgs ) =
             StopsList.init
 
+        creds =
+            case ( token, email ) of
+                ( Just token, Just email ) ->
+                    Just (Authenticate.ActiveUserCreds token email)
+
+                _ ->
+                    Nothing
+
         ( authenticate, authenticateMsgs ) =
-            Authenticate.init (Authenticate.ActiveUserCreds token email)
+            Authenticate.init creds
 
         currentRoute =
             routeFromResult result
@@ -94,6 +97,7 @@ subscriptions model =
 
 -- UPDATE
 
+
 type Msg
     = StopsList StopsList.Msg
     | Authenticate Authenticate.Msg
@@ -119,6 +123,8 @@ update msg model =
                 ( { model | authentication = authenticate }
                 , Cmd.map Authenticate authenticateCmds
                 )
+
+
 
 -- VIEW
 

@@ -1,29 +1,17 @@
 module Signup exposing (..)
 
 import Html exposing (..)
-import Html.App as App
-import Html.Attributes exposing (..)
-import Html.Events exposing (onInput)
-import Html.Events exposing (onClick)
+import Html.Attributes exposing (href, type', placeholder, class, style)
+import Html.Events exposing (onInput, onClick)
 import Http
 import Json.Decode as Json exposing ((:=))
 import Json.Encode as JS
 import Task
 import String exposing (isEmpty)
 import List exposing (map, concat, concatMap)
-import Platform.Cmd exposing ((!))
 
 
 -- MODEL
-
-
-main =
-    App.program
-        { init = init
-        , view = view
-        , update = update
-        , subscriptions = subscriptions
-        }
 
 
 type alias Model =
@@ -154,6 +142,7 @@ validate model =
 isValid : Model -> Bool
 isValid model =
     model.errors.email == Nothing && model.errors.password == Nothing
+
 
 
 -- HTTP
