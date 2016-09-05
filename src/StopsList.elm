@@ -7,15 +7,6 @@ import List
 import Stop
 
 
-main =
-    App.program
-        { init = init
-        , view = view
-        , update = update
-        , subscriptions = subscriptions
-        }
-
-
 type alias Model =
     { stops : List IndexedStop
     , uid : Int
@@ -93,12 +84,3 @@ view model =
 viewIndexedStop : IndexedStop -> Html Msg
 viewIndexedStop { id, model } =
     App.map (Modify id) (Stop.view model)
-
-
-
---
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.none

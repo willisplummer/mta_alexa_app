@@ -7739,7 +7739,7 @@ function applyPatch(domNode, patch)
 	switch (patch.type)
 	{
 		case 'p-redraw':
-			return redraw(domNode, patch.data, patch.eventNode);
+			return applyPatchRedraw(domNode, patch.data, patch.eventNode);
 
 		case 'p-facts':
 			applyFacts(domNode, patch.eventNode, patch.data);
@@ -7788,57 +7788,7 @@ function applyPatch(domNode, patch)
 			return domNode;
 
 		case 'p-reorder':
-			var data = patch.data;
-
-			// end inserts
-			var endInserts = data.endInserts;
-			var end;
-			if (typeof endInserts !== 'undefined')
-			{
-				if (endInserts.length === 1)
-				{
-					var insert = endInserts[0];
-					var entry = insert.entry;
-					var end = entry.tag === 'move'
-						? entry.data
-						: render(entry.vnode, patch.eventNode);
-				}
-				else
-				{
-					end = document.createDocumentFragment();
-					for (var i = 0; i < endInserts.length; i++)
-					{
-						var insert = endInserts[i];
-						var entry = insert.entry;
-						var node = entry.tag === 'move'
-							? entry.data
-							: render(entry.vnode, patch.eventNode);
-						end.appendChild(node);
-					}
-				}
-			}
-
-			// removals
-			domNode = applyPatchesHelp(domNode, data.patches);
-
-			// inserts
-			var inserts = data.inserts;
-			for (var i = 0; i < inserts.length; i++)
-			{
-				var insert = inserts[i];
-				var entry = insert.entry;
-				var node = entry.tag === 'move'
-					? entry.data
-					: render(entry.vnode, patch.eventNode);
-				domNode.insertBefore(node, domNode.childNodes[insert.index]);
-			}
-
-			if (typeof end !== 'undefined')
-			{
-				domNode.appendChild(end);
-			}
-
-			return domNode;
+			return applyPatchReorder(domNode, patch);
 
 		case 'p-custom':
 			var impl = patch.data;
@@ -7850,7 +7800,7 @@ function applyPatch(domNode, patch)
 }
 
 
-function redraw(domNode, vNode, eventNode)
+function applyPatchRedraw(domNode, vNode, eventNode)
 {
 	var parentNode = domNode.parentNode;
 	var newNode = render(vNode, eventNode);
@@ -7865,6 +7815,59 @@ function redraw(domNode, vNode, eventNode)
 		parentNode.replaceChild(newNode, domNode);
 	}
 	return newNode;
+}
+
+
+function applyPatchReorder(domNode, patch)
+{
+	var data = patch.data;
+
+	// remove end inserts
+	var frag = applyPatchReorderEndInsertsHelp(data.endInserts, patch);
+
+	// removals
+	domNode = applyPatchesHelp(domNode, data.patches);
+
+	// inserts
+	var inserts = data.inserts;
+	for (var i = 0; i < inserts.length; i++)
+	{
+		var insert = inserts[i];
+		var entry = insert.entry;
+		var node = entry.tag === 'move'
+			? entry.data
+			: render(entry.vnode, patch.eventNode);
+		domNode.insertBefore(node, domNode.childNodes[insert.index]);
+	}
+
+	// add end inserts
+	if (typeof frag !== 'undefined')
+	{
+		domNode.appendChild(frag);
+	}
+
+	return domNode;
+}
+
+
+function applyPatchReorderEndInsertsHelp(endInserts, patch)
+{
+	if (typeof endInserts === 'undefined')
+	{
+		return;
+	}
+
+	var frag = document.createDocumentFragment();
+	for (var i = 0; i < endInserts.length; i++)
+	{
+		var insert = endInserts[i];
+		var entry = insert.entry;
+		frag.appendChild(entry.tag === 'move'
+			? entry.data
+			: render(entry.vnode, patch.eventNode)
+		);
+	}
+	return frag;
 }
 
 
@@ -9408,9 +9411,6 @@ var _evancz$url_parser$UrlParser$format = F2(
 				}));
 	});
 
-var _user$project$Signup$subscriptions = function (model) {
-	return _elm_lang$core$Platform_Sub$none;
-};
 var _user$project$Signup$validatedInput = F2(
 	function (list, error) {
 		var errorFields = function () {
@@ -9477,7 +9477,7 @@ var _user$project$Signup$isValid = function (model) {
 };
 var _user$project$Signup$validate = function (model) {
 	var newErrors = {
-		email: _elm_lang$core$String$isEmpty(model.email) ? _elm_lang$core$Maybe$Just('Enter an email address') : _elm_lang$core$Maybe$Nothing,
+		email: _elm_lang$core$String$isEmpty(model.email) ? _elm_lang$core$Maybe$Just('Enter an email address!') : _elm_lang$core$Maybe$Nothing,
 		password: _elm_lang$core$String$isEmpty(model.password) ? _elm_lang$core$Maybe$Just('Enter a password!') : (_elm_lang$core$String$isEmpty(model.passwordAgain) ? _elm_lang$core$Maybe$Just('Please re-enter your password!') : ((!_elm_lang$core$Native_Utils.eq(model.password, model.passwordAgain)) ? _elm_lang$core$Maybe$Just('Passwords don\'t match') : _elm_lang$core$Maybe$Nothing)),
 		server: _elm_lang$core$Native_List.fromArray(
 			[])
@@ -9598,8 +9598,8 @@ var _user$project$Signup$update = F2(
 						{
 							token: _elm_lang$core$Maybe$Nothing,
 							errors: {
-								email: _elm_lang$core$Maybe$Just(''),
-								password: _elm_lang$core$Maybe$Just(''),
+								email: _elm_lang$core$Maybe$Nothing,
+								password: _elm_lang$core$Maybe$Nothing,
 								server: _elm_lang$core$Native_List.fromArray(
 									['there was a problem connecting to the server. please try again.'])
 							}
@@ -9620,20 +9620,26 @@ var _user$project$Signup$Email = function (a) {
 };
 var _user$project$Signup$view = function (model) {
 	var serverErrors = _elm_lang$core$List$isEmpty(model.errors.server) ? _elm_lang$core$Native_List.fromArray(
-		[]) : A2(
-		_elm_lang$core$List$map,
-		function (str) {
-			return _elm_lang$html$Html$text(str);
-		},
-		model.errors.server);
-	var tokenText = function () {
-		var _p4 = model.token;
-		if (_p4.ctor === 'Just') {
-			return _p4._0;
-		} else {
-			return 'nothing here';
-		}
-	}();
+		[]) : _elm_lang$core$Native_List.fromArray(
+		[
+			A2(
+			_elm_lang$html$Html$div,
+			_elm_lang$core$Native_List.fromArray(
+				[
+					_elm_lang$html$Html_Attributes$class('validation-error'),
+					_elm_lang$html$Html_Attributes$style(
+					_elm_lang$core$Native_List.fromArray(
+						[
+							{ctor: '_Tuple2', _0: 'color', _1: 'red '}
+						]))
+				]),
+			A2(
+				_elm_lang$core$List$map,
+				function (str) {
+					return _elm_lang$html$Html$text(str);
+				},
+				model.errors.server))
+		]);
 	var body = A2(
 		_elm_lang$core$Basics_ops['++'],
 		A2(
@@ -9666,16 +9672,6 @@ var _user$project$Signup$view = function (model) {
 						_elm_lang$core$Native_List.fromArray(
 							[
 								_elm_lang$html$Html$text('Submit')
-							])),
-						A2(
-						_elm_lang$html$Html$div,
-						_elm_lang$core$Native_List.fromArray(
-							[
-								_elm_lang$html$Html_Attributes$class('response')
-							]),
-						_elm_lang$core$Native_List.fromArray(
-							[
-								_elm_lang$html$Html$text(tokenText)
 							]))
 					]),
 				A2(
@@ -9708,161 +9704,447 @@ var _user$project$Signup$view = function (model) {
 			[]),
 		body);
 };
-var _user$project$Signup$main = {
-	main: _elm_lang$html$Html_App$program(
-		{init: _user$project$Signup$init, view: _user$project$Signup$view, update: _user$project$Signup$update, subscriptions: _user$project$Signup$subscriptions})
+
+var _user$project$Login$validatedInput = F2(
+	function (list, error) {
+		var errorFields = function () {
+			var _p0 = error;
+			if (_p0.ctor === 'Just') {
+				return _elm_lang$core$Native_List.fromArray(
+					[
+						A2(
+						_elm_lang$html$Html$div,
+						_elm_lang$core$Native_List.fromArray(
+							[
+								_elm_lang$html$Html_Attributes$class('validation-error'),
+								_elm_lang$html$Html_Attributes$style(
+								_elm_lang$core$Native_List.fromArray(
+									[
+										{ctor: '_Tuple2', _0: 'color', _1: 'red'}
+									]))
+							]),
+						_elm_lang$core$Native_List.fromArray(
+							[
+								_elm_lang$html$Html$text(_p0._0)
+							]))
+					]);
+			} else {
+				return _elm_lang$core$Native_List.fromArray(
+					[]);
+			}
+		}();
+		var inputFields = A2(
+			_elm_lang$core$List$concatMap,
+			function (_p1) {
+				var _p2 = _p1;
+				return _elm_lang$core$Native_List.fromArray(
+					[
+						A2(
+						_elm_lang$html$Html$input,
+						_elm_lang$core$Native_List.fromArray(
+							[
+								_elm_lang$html$Html_Attributes$type$(_p2._1),
+								_elm_lang$html$Html_Attributes$placeholder(_p2._0),
+								_elm_lang$html$Html_Events$onInput(_p2._2)
+							]),
+						_elm_lang$core$Native_List.fromArray(
+							[]))
+					]);
+			},
+			list);
+		return A2(_elm_lang$core$Basics_ops['++'], inputFields, errorFields);
+	});
+var _user$project$Login$decodeLoginResponse = A3(
+	_elm_lang$core$Json_Decode$object2,
+	F2(
+		function (v0, v1) {
+			return {ctor: '_Tuple2', _0: v0, _1: v1};
+		}),
+	_elm_lang$core$Json_Decode$maybe(
+		A2(_elm_lang$core$Json_Decode_ops[':='], 'token', _elm_lang$core$Json_Decode$string)),
+	_elm_lang$core$Json_Decode$maybe(
+		A2(_elm_lang$core$Json_Decode_ops[':='], 'errors', _elm_lang$core$Json_Decode$string)));
+var _user$project$Login$isValid = function (model) {
+	return _elm_lang$core$Native_Utils.eq(model.errors.email, _elm_lang$core$Maybe$Nothing) && _elm_lang$core$Native_Utils.eq(model.errors.password, _elm_lang$core$Maybe$Nothing);
+};
+var _user$project$Login$validate = function (model) {
+	var newErrors = {
+		email: _elm_lang$core$String$isEmpty(model.email) ? _elm_lang$core$Maybe$Just('Enter an email address') : _elm_lang$core$Maybe$Nothing,
+		password: _elm_lang$core$String$isEmpty(model.password) ? _elm_lang$core$Maybe$Just('Enter your password!') : _elm_lang$core$Maybe$Nothing,
+		server: _elm_lang$core$Maybe$Nothing
+	};
+	return _elm_lang$core$Native_Utils.update(
+		model,
+		{errors: newErrors});
+};
+var _user$project$Login$Model = F4(
+	function (a, b, c, d) {
+		return {email: a, password: b, token: c, errors: d};
+	});
+var _user$project$Login$Errors = F3(
+	function (a, b, c) {
+		return {email: a, password: b, server: c};
+	});
+var _user$project$Login$initialErrors = A3(_user$project$Login$Errors, _elm_lang$core$Maybe$Nothing, _elm_lang$core$Maybe$Nothing, _elm_lang$core$Maybe$Nothing);
+var _user$project$Login$initialModel = A4(_user$project$Login$Model, '', '', _elm_lang$core$Maybe$Nothing, _user$project$Login$initialErrors);
+var _user$project$Login$init = {ctor: '_Tuple2', _0: _user$project$Login$initialModel, _1: _elm_lang$core$Platform_Cmd$none};
+var _user$project$Login$FetchFail = function (a) {
+	return {ctor: 'FetchFail', _0: a};
+};
+var _user$project$Login$FetchSucceed = function (a) {
+	return {ctor: 'FetchSucceed', _0: a};
+};
+var _user$project$Login$submitData = function (model) {
+	var body = A2(
+		_evancz$elm_http$Http$stringData,
+		'user',
+		A2(
+			_elm_lang$core$Json_Encode$encode,
+			0,
+			_elm_lang$core$Json_Encode$object(
+				_elm_lang$core$Native_List.fromArray(
+					[
+						{
+						ctor: '_Tuple2',
+						_0: 'email',
+						_1: _elm_lang$core$Json_Encode$string(model.email)
+					},
+						{
+						ctor: '_Tuple2',
+						_0: 'pw',
+						_1: _elm_lang$core$Json_Encode$string(model.password)
+					}
+					]))));
+	var url = 'http://localhost:4567/elm-login.json';
+	return A3(
+		_elm_lang$core$Task$perform,
+		_user$project$Login$FetchFail,
+		_user$project$Login$FetchSucceed,
+		A3(
+			_evancz$elm_http$Http$post,
+			_user$project$Login$decodeLoginResponse,
+			url,
+			_evancz$elm_http$Http$multipart(
+				_elm_lang$core$Native_List.fromArray(
+					[body]))));
+};
+var _user$project$Login$update = F2(
+	function (msg, model) {
+		var _p3 = msg;
+		switch (_p3.ctor) {
+			case 'Email':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{email: _p3._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'Password':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{password: _p3._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'Validate':
+				var newModel = _user$project$Login$validate(model);
+				var cmd = _user$project$Login$isValid(newModel) ? _user$project$Login$submitData(newModel) : _elm_lang$core$Platform_Cmd$none;
+				return {ctor: '_Tuple2', _0: newModel, _1: cmd};
+			case 'FetchSucceed':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{
+							token: _p3._0._0,
+							errors: A3(_user$project$Login$Errors, _elm_lang$core$Maybe$Nothing, _elm_lang$core$Maybe$Nothing, _p3._0._1)
+						}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			default:
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{
+							token: _elm_lang$core$Maybe$Nothing,
+							errors: {
+								email: _elm_lang$core$Maybe$Nothing,
+								password: _elm_lang$core$Maybe$Nothing,
+								server: _elm_lang$core$Maybe$Just('there was a problem connecting to the server. please try again.')
+							}
+						}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+		}
+	});
+var _user$project$Login$Validate = {ctor: 'Validate'};
+var _user$project$Login$Password = function (a) {
+	return {ctor: 'Password', _0: a};
+};
+var _user$project$Login$Email = function (a) {
+	return {ctor: 'Email', _0: a};
+};
+var _user$project$Login$view = function (model) {
+	var serverErrors = function () {
+		var _p4 = model.errors.server;
+		if (_p4.ctor === 'Just') {
+			return _elm_lang$core$Native_List.fromArray(
+				[
+					A2(
+					_elm_lang$html$Html$div,
+					_elm_lang$core$Native_List.fromArray(
+						[
+							_elm_lang$html$Html_Attributes$class('validation-error'),
+							_elm_lang$html$Html_Attributes$style(
+							_elm_lang$core$Native_List.fromArray(
+								[
+									{ctor: '_Tuple2', _0: 'color', _1: 'red '}
+								]))
+						]),
+					_elm_lang$core$Native_List.fromArray(
+						[
+							_elm_lang$html$Html$text(_p4._0)
+						]))
+				]);
+		} else {
+			return _elm_lang$core$Native_List.fromArray(
+				[]);
+		}
+	}();
+	var body = A2(
+		_elm_lang$core$Basics_ops['++'],
+		A2(
+			_user$project$Login$validatedInput,
+			_elm_lang$core$Native_List.fromArray(
+				[
+					{ctor: '_Tuple3', _0: 'Email', _1: 'text', _2: _user$project$Login$Email}
+				]),
+			model.errors.email),
+		A2(
+			_elm_lang$core$Basics_ops['++'],
+			A2(
+				_user$project$Login$validatedInput,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						{ctor: '_Tuple3', _0: 'Password', _1: 'password', _2: _user$project$Login$Password}
+					]),
+				model.errors.password),
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				_elm_lang$core$Native_List.fromArray(
+					[
+						A2(
+						_elm_lang$html$Html$button,
+						_elm_lang$core$Native_List.fromArray(
+							[
+								_elm_lang$html$Html_Events$onClick(_user$project$Login$Validate)
+							]),
+						_elm_lang$core$Native_List.fromArray(
+							[
+								_elm_lang$html$Html$text('Submit')
+							]))
+					]),
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					serverErrors,
+					_elm_lang$core$Native_List.fromArray(
+						[
+							A2(
+							_elm_lang$html$Html$div,
+							_elm_lang$core$Native_List.fromArray(
+								[]),
+							_elm_lang$core$Native_List.fromArray(
+								[
+									_elm_lang$html$Html$text('want to create an account? you can always just '),
+									A2(
+									_elm_lang$html$Html$a,
+									_elm_lang$core$Native_List.fromArray(
+										[
+											_elm_lang$html$Html_Attributes$href('#signup')
+										]),
+									_elm_lang$core$Native_List.fromArray(
+										[
+											_elm_lang$html$Html$text('signup')
+										]))
+								]))
+						])))));
+	return A2(
+		_elm_lang$html$Html$div,
+		_elm_lang$core$Native_List.fromArray(
+			[]),
+		body);
 };
 
-var _user$project$Authenticate$subscriptions = function (model) {
-	return _elm_lang$core$Platform_Sub$none;
-};
-var _user$project$Authenticate$Model = F2(
-	function (a, b) {
-		return {signup: a, activeUser: b};
+var _user$project$Authenticate$setToken = _elm_lang$core$Native_Platform.outgoingPort(
+	'setToken',
+	function (v) {
+		return (v.ctor === 'Nothing') ? null : {token: v._0.token, email: v._0.email};
 	});
+var _user$project$Authenticate$Model = F3(
+	function (a, b, c) {
+		return {signup: a, login: b, activeUser: c};
+	});
+var _user$project$Authenticate$emptyModel = A3(_user$project$Authenticate$Model, _user$project$Signup$initialModel, _user$project$Login$initialModel, _elm_lang$core$Maybe$Nothing);
 var _user$project$Authenticate$ActiveUserCreds = F2(
 	function (a, b) {
 		return {token: a, email: b};
 	});
+var _user$project$Authenticate$LoginView = {ctor: 'LoginView'};
+var _user$project$Authenticate$SignupView = {ctor: 'SignupView'};
 var _user$project$Authenticate$Logout = {ctor: 'Logout'};
+var _user$project$Authenticate$Login = function (a) {
+	return {ctor: 'Login', _0: a};
+};
 var _user$project$Authenticate$Signup = function (a) {
 	return {ctor: 'Signup', _0: a};
 };
 var _user$project$Authenticate$init = function (creds) {
-	var _p0 = _user$project$Signup$init;
-	var signupModel = _p0._0;
-	var signupMsgs = _p0._1;
+	var _p0 = _user$project$Login$init;
+	var loginModel = _p0._0;
+	var loginMsgs = _p0._1;
+	var _p1 = _user$project$Signup$init;
+	var signupModel = _p1._0;
+	var signupMsgs = _p1._1;
 	return {
 		ctor: '_Tuple2',
-		_0: {signup: signupModel, activeUser: creds},
+		_0: {signup: signupModel, login: _user$project$Login$initialModel, activeUser: creds},
 		_1: _elm_lang$core$Platform_Cmd$batch(
 			_elm_lang$core$Native_List.fromArray(
 				[
-					A2(_elm_lang$core$Platform_Cmd$map, _user$project$Authenticate$Signup, signupMsgs)
+					A2(_elm_lang$core$Platform_Cmd$map, _user$project$Authenticate$Signup, signupMsgs),
+					A2(_elm_lang$core$Platform_Cmd$map, _user$project$Authenticate$Login, _elm_lang$core$Platform_Cmd$none)
 				]))
 	};
 };
 var _user$project$Authenticate$update = F2(
 	function (message, model) {
-		var _p1 = message;
-		if (_p1.ctor === 'Signup') {
-			var _p2 = A2(_user$project$Signup$update, _p1._0, model.signup);
-			var signup = _p2._0;
-			var signupCmds = _p2._1;
-			return {
-				ctor: '_Tuple2',
-				_0: _elm_lang$core$Native_Utils.update(
-					model,
-					{signup: signup}),
-				_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$Authenticate$Signup, signupCmds)
-			};
-		} else {
-			return {
-				ctor: '_Tuple2',
-				_0: _elm_lang$core$Native_Utils.update(
-					model,
-					{
-						activeUser: A2(_user$project$Authenticate$ActiveUserCreds, _elm_lang$core$Maybe$Nothing, _elm_lang$core$Maybe$Nothing)
-					}),
-				_1: _elm_lang$core$Platform_Cmd$none
-			};
+		var _p2 = message;
+		switch (_p2.ctor) {
+			case 'Signup':
+				var _p6 = _p2._0;
+				var _p3 = A2(_user$project$Signup$update, _p6, model.signup);
+				var signup = _p3._0;
+				var signupCmds = _p3._1;
+				var creds = function () {
+					var _p4 = signup.token;
+					if (_p4.ctor === 'Just') {
+						return _elm_lang$core$Maybe$Just(
+							{token: _p4._0, email: signup.email});
+					} else {
+						return _elm_lang$core$Maybe$Nothing;
+					}
+				}();
+				var response = function () {
+					var _p5 = _p6;
+					if (_p5.ctor === 'FetchSucceed') {
+						return {
+							ctor: '_Tuple2',
+							_0: _elm_lang$core$Native_Utils.update(
+								model,
+								{signup: signup, activeUser: creds}),
+							_1: _elm_lang$core$Platform_Cmd$batch(
+								_elm_lang$core$Native_List.fromArray(
+									[
+										A2(_elm_lang$core$Platform_Cmd$map, _user$project$Authenticate$Signup, signupCmds),
+										_user$project$Authenticate$setToken(creds)
+									]))
+						};
+					} else {
+						return {
+							ctor: '_Tuple2',
+							_0: _elm_lang$core$Native_Utils.update(
+								model,
+								{signup: signup}),
+							_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$Authenticate$Signup, signupCmds)
+						};
+					}
+				}();
+				return response;
+			case 'Login':
+				var _p10 = _p2._0;
+				var _p7 = A2(_user$project$Login$update, _p10, model.login);
+				var login = _p7._0;
+				var loginCmds = _p7._1;
+				var creds = function () {
+					var _p8 = login.token;
+					if (_p8.ctor === 'Just') {
+						return _elm_lang$core$Maybe$Just(
+							{token: _p8._0, email: login.email});
+					} else {
+						return _elm_lang$core$Maybe$Nothing;
+					}
+				}();
+				var response = function () {
+					var _p9 = _p10;
+					if (_p9.ctor === 'FetchSucceed') {
+						return {
+							ctor: '_Tuple2',
+							_0: _elm_lang$core$Native_Utils.update(
+								model,
+								{login: login, activeUser: creds}),
+							_1: _elm_lang$core$Platform_Cmd$batch(
+								_elm_lang$core$Native_List.fromArray(
+									[
+										A2(_elm_lang$core$Platform_Cmd$map, _user$project$Authenticate$Login, loginCmds),
+										_user$project$Authenticate$setToken(creds)
+									]))
+						};
+					} else {
+						return {
+							ctor: '_Tuple2',
+							_0: _elm_lang$core$Native_Utils.update(
+								model,
+								{login: login}),
+							_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$Authenticate$Login, loginCmds)
+						};
+					}
+				}();
+				return response;
+			default:
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{activeUser: _elm_lang$core$Maybe$Nothing}),
+					_1: _user$project$Authenticate$setToken(model.activeUser)
+				};
 		}
 	});
-var _user$project$Authenticate$view = function (model) {
-	var tokenText = function () {
-		var _p3 = model.activeUser.token;
-		if (_p3.ctor === 'Just') {
-			return _p3._0;
-		} else {
-			return 'nothing here';
-		}
-	}();
-	return A2(
-		_elm_lang$html$Html$div,
-		_elm_lang$core$Native_List.fromArray(
-			[]),
-		_elm_lang$core$Native_List.fromArray(
-			[
-				A2(
-				_elm_lang$html$Html_App$map,
-				_user$project$Authenticate$Signup,
-				_user$project$Signup$view(model.signup)),
-				_elm_lang$html$Html$text(tokenText)
-			]));
+var _user$project$Authenticate$logout = function (model) {
+	return A2(_user$project$Authenticate$update, _user$project$Authenticate$Logout, model);
 };
-var _user$project$Authenticate$main = {
-	main: _elm_lang$html$Html_App$programWithFlags(
-		{init: _user$project$Authenticate$init, view: _user$project$Authenticate$view, update: _user$project$Authenticate$update, subscriptions: _user$project$Authenticate$subscriptions}),
-	flags: A2(
-		_elm_lang$core$Json_Decode$andThen,
-		A2(
-			_elm_lang$core$Json_Decode_ops[':='],
-			'email',
-			_elm_lang$core$Json_Decode$oneOf(
+var _user$project$Authenticate$view = F2(
+	function (model, view) {
+		var _p11 = view;
+		if (_p11.ctor === 'SignupView') {
+			return A2(
+				_elm_lang$html$Html$div,
+				_elm_lang$core$Native_List.fromArray(
+					[]),
 				_elm_lang$core$Native_List.fromArray(
 					[
-						_elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
-						A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$string)
-					]))),
-		function (email) {
+						A2(
+						_elm_lang$html$Html_App$map,
+						_user$project$Authenticate$Signup,
+						_user$project$Signup$view(model.signup))
+					]));
+		} else {
 			return A2(
-				_elm_lang$core$Json_Decode$andThen,
-				A2(
-					_elm_lang$core$Json_Decode_ops[':='],
-					'token',
-					_elm_lang$core$Json_Decode$oneOf(
-						_elm_lang$core$Native_List.fromArray(
-							[
-								_elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
-								A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$string)
-							]))),
-				function (token) {
-					return _elm_lang$core$Json_Decode$succeed(
-						{email: email, token: token});
-				});
-		})
-};
-
-var _user$project$Routing$NotFoundRoute = {ctor: 'NotFoundRoute'};
-var _user$project$Routing$routeFromResult = function (result) {
-	var _p0 = result;
-	if (_p0.ctor === 'Ok') {
-		return _p0._0;
-	} else {
-		return _user$project$Routing$NotFoundRoute;
-	}
-};
-var _user$project$Routing$HomeRoute = {ctor: 'HomeRoute'};
-var _user$project$Routing$SignupRoute = {ctor: 'SignupRoute'};
-var _user$project$Routing$LoginRoute = {ctor: 'LoginRoute'};
-var _user$project$Routing$matchers = _evancz$url_parser$UrlParser$oneOf(
-	_elm_lang$core$Native_List.fromArray(
-		[
-			A2(
-			_evancz$url_parser$UrlParser$format,
-			_user$project$Routing$SignupRoute,
-			_evancz$url_parser$UrlParser$s('')),
-			A2(
-			_evancz$url_parser$UrlParser$format,
-			_user$project$Routing$SignupRoute,
-			_evancz$url_parser$UrlParser$s('signup')),
-			A2(
-			_evancz$url_parser$UrlParser$format,
-			_user$project$Routing$HomeRoute,
-			_evancz$url_parser$UrlParser$s('home')),
-			A2(
-			_evancz$url_parser$UrlParser$format,
-			_user$project$Routing$LoginRoute,
-			_evancz$url_parser$UrlParser$s('login'))
-		]));
-var _user$project$Routing$hashParser = function (location) {
-	return A3(
-		_evancz$url_parser$UrlParser$parse,
-		_elm_lang$core$Basics$identity,
-		_user$project$Routing$matchers,
-		A2(_elm_lang$core$String$dropLeft, 1, location.hash));
-};
-var _user$project$Routing$parser = _elm_lang$navigation$Navigation$makeParser(_user$project$Routing$hashParser);
+				_elm_lang$html$Html$div,
+				_elm_lang$core$Native_List.fromArray(
+					[]),
+				_elm_lang$core$Native_List.fromArray(
+					[
+						A2(
+						_elm_lang$html$Html_App$map,
+						_user$project$Authenticate$Login,
+						_user$project$Login$view(model.login))
+					]));
+		}
+	});
 
 var _user$project$Stop$subscriptions = function (model) {
 	return _elm_lang$core$Platform_Sub$none;
@@ -10065,9 +10347,6 @@ var _user$project$Stop$main = {
 		})
 };
 
-var _user$project$StopsList$subscriptions = function (model) {
-	return _elm_lang$core$Platform_Sub$none;
-};
 var _user$project$StopsList$initialModel = {
 	stops: _elm_lang$core$Native_List.fromArray(
 		[]),
@@ -10181,38 +10460,185 @@ var _user$project$StopsList$view = function (model) {
 			_elm_lang$core$Native_List.fromArray(
 				[add])));
 };
-var _user$project$StopsList$main = {
-	main: _elm_lang$html$Html_App$program(
-		{init: _user$project$StopsList$init, view: _user$project$StopsList$view, update: _user$project$StopsList$update, subscriptions: _user$project$StopsList$subscriptions})
+
+var _user$project$LoggedIn$emptyModel = {stopsList: _user$project$StopsList$initialModel};
+var _user$project$LoggedIn$Model = function (a) {
+	return {stopsList: a};
+};
+var _user$project$LoggedIn$Logout = {ctor: 'Logout'};
+var _user$project$LoggedIn$StopsList = function (a) {
+	return {ctor: 'StopsList', _0: a};
+};
+var _user$project$LoggedIn$init = function () {
+	var _p0 = _user$project$StopsList$init;
+	var stopsList = _p0._0;
+	var stopsListMessages = _p0._1;
+	return {
+		ctor: '_Tuple2',
+		_0: {stopsList: stopsList},
+		_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$LoggedIn$StopsList, stopsListMessages)
+	};
+}();
+var _user$project$LoggedIn$update = F2(
+	function (message, model) {
+		var _p1 = message;
+		if (_p1.ctor === 'StopsList') {
+			var _p2 = A2(_user$project$StopsList$update, _p1._0, model.stopsList);
+			var stopsList = _p2._0;
+			var stopsListMessages = _p2._1;
+			return {
+				ctor: '_Tuple2',
+				_0: _elm_lang$core$Native_Utils.update(
+					model,
+					{stopsList: stopsList}),
+				_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$LoggedIn$StopsList, stopsListMessages)
+			};
+		} else {
+			return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+		}
+	});
+var _user$project$LoggedIn$view = function (model) {
+	return A2(
+		_elm_lang$html$Html$div,
+		_elm_lang$core$Native_List.fromArray(
+			[]),
+		_elm_lang$core$Native_List.fromArray(
+			[
+				A2(
+				_elm_lang$html$Html$div,
+				_elm_lang$core$Native_List.fromArray(
+					[]),
+				_elm_lang$core$Native_List.fromArray(
+					[
+						A2(
+						_elm_lang$html$Html_App$map,
+						_user$project$LoggedIn$StopsList,
+						_user$project$StopsList$view(model.stopsList))
+					])),
+				A2(
+				_elm_lang$html$Html$div,
+				_elm_lang$core$Native_List.fromArray(
+					[]),
+				_elm_lang$core$Native_List.fromArray(
+					[
+						A2(
+						_elm_lang$html$Html$button,
+						_elm_lang$core$Native_List.fromArray(
+							[
+								_elm_lang$html$Html_Events$onClick(_user$project$LoggedIn$Logout)
+							]),
+						_elm_lang$core$Native_List.fromArray(
+							[
+								_elm_lang$html$Html$text('Logout!')
+							]))
+					]))
+			]));
 };
 
-var _user$project$Main$decodeLoginResponse = A2(
-	_elm_lang$core$Json_Decode$at,
+var _user$project$Routing$toUrl = function (route) {
+	var _p0 = route;
+	switch (_p0.ctor) {
+		case 'LoginRoute':
+			return '#login';
+		case 'SignupRoute':
+			return '#signup';
+		case 'HomeRoute':
+			return '#home';
+		default:
+			return '#notfound';
+	}
+};
+var _user$project$Routing$updateUrl = function (route) {
+	return _elm_lang$navigation$Navigation$newUrl(
+		_user$project$Routing$toUrl(route));
+};
+var _user$project$Routing$NotFoundRoute = {ctor: 'NotFoundRoute'};
+var _user$project$Routing$routeFromResult = function (result) {
+	var _p1 = result;
+	if (_p1.ctor === 'Ok') {
+		return _p1._0;
+	} else {
+		return _user$project$Routing$NotFoundRoute;
+	}
+};
+var _user$project$Routing$HomeRoute = {ctor: 'HomeRoute'};
+var _user$project$Routing$SignupRoute = {ctor: 'SignupRoute'};
+var _user$project$Routing$LoginRoute = {ctor: 'LoginRoute'};
+var _user$project$Routing$matchers = _evancz$url_parser$UrlParser$oneOf(
 	_elm_lang$core$Native_List.fromArray(
-		['token']),
-	_elm_lang$core$Json_Decode$string);
+		[
+			A2(
+			_evancz$url_parser$UrlParser$format,
+			_user$project$Routing$SignupRoute,
+			_evancz$url_parser$UrlParser$s('')),
+			A2(
+			_evancz$url_parser$UrlParser$format,
+			_user$project$Routing$SignupRoute,
+			_evancz$url_parser$UrlParser$s('signup')),
+			A2(
+			_evancz$url_parser$UrlParser$format,
+			_user$project$Routing$HomeRoute,
+			_evancz$url_parser$UrlParser$s('home')),
+			A2(
+			_evancz$url_parser$UrlParser$format,
+			_user$project$Routing$LoginRoute,
+			_evancz$url_parser$UrlParser$s('login'))
+		]));
+var _user$project$Routing$hashParser = function (location) {
+	return A3(
+		_evancz$url_parser$UrlParser$parse,
+		_elm_lang$core$Basics$identity,
+		_user$project$Routing$matchers,
+		A2(_elm_lang$core$String$dropLeft, 1, location.hash));
+};
+var _user$project$Routing$parser = _elm_lang$navigation$Navigation$makeParser(_user$project$Routing$hashParser);
+
 var _user$project$Main$subscriptions = function (model) {
 	return _elm_lang$core$Platform_Sub$none;
 };
 var _user$project$Main$urlUpdate = F2(
 	function (result, model) {
+		var authenticated = function () {
+			var _p0 = model.authenticate.activeUser;
+			if (_p0.ctor === 'Just') {
+				return true;
+			} else {
+				return false;
+			}
+		}();
 		var currentRoute = _user$project$Routing$routeFromResult(result);
+		var newRoute = function () {
+			if (authenticated) {
+				var _p1 = currentRoute;
+				switch (_p1.ctor) {
+					case 'SignupRoute':
+						return _user$project$Routing$HomeRoute;
+					case 'LoginRoute':
+						return _user$project$Routing$HomeRoute;
+					default:
+						return currentRoute;
+				}
+			} else {
+				var _p2 = currentRoute;
+				if (_p2.ctor === 'HomeRoute') {
+					return _user$project$Routing$LoginRoute;
+				} else {
+					return currentRoute;
+				}
+			}
+		}();
+		var commands = _elm_lang$core$Native_Utils.eq(newRoute, currentRoute) ? _elm_lang$core$Platform_Cmd$none : _user$project$Routing$updateUrl(newRoute);
 		return {
 			ctor: '_Tuple2',
 			_0: _elm_lang$core$Native_Utils.update(
 				model,
-				{route: currentRoute}),
-			_1: _elm_lang$core$Platform_Cmd$none
+				{route: newRoute}),
+			_1: commands
 		};
-	});
-var _user$project$Main$setToken = _elm_lang$core$Native_Platform.outgoingPort(
-	'setToken',
-	function (v) {
-		return (v.ctor === 'Nothing') ? null : v._0;
 	});
 var _user$project$Main$Model = F4(
 	function (a, b, c, d) {
-		return {authentication: a, stopsList: b, route: c, token: d};
+		return {authenticate: a, loggedIn: b, route: c, token: d};
 	});
 var _user$project$Main$HomePage = {ctor: 'HomePage'};
 var _user$project$Main$LoginPage = {ctor: 'LoginPage'};
@@ -10220,165 +10646,122 @@ var _user$project$Main$SignUpPage = {ctor: 'SignUpPage'};
 var _user$project$Main$Authenticate = function (a) {
 	return {ctor: 'Authenticate', _0: a};
 };
-var _user$project$Main$Logout = {ctor: 'Logout'};
-var _user$project$Main$FetchSucceed = function (a) {
-	return {ctor: 'FetchSucceed', _0: a};
-};
-var _user$project$Main$FetchFail = function (a) {
-	return {ctor: 'FetchFail', _0: a};
-};
-var _user$project$Main$loginEndpoint = function (model) {
-	var body = A2(
-		_evancz$elm_http$Http$stringData,
-		'user',
-		A2(
-			_elm_lang$core$Json_Encode$encode,
-			0,
-			_elm_lang$core$Json_Encode$object(
-				_elm_lang$core$Native_List.fromArray(
-					[
-						{
-						ctor: '_Tuple2',
-						_0: 'email',
-						_1: _elm_lang$core$Json_Encode$string('willisplummer@gmail.com')
-					},
-						{
-						ctor: '_Tuple2',
-						_0: 'password',
-						_1: _elm_lang$core$Json_Encode$string('testtest')
-					}
-					]))));
-	var url = 'http://localhost:4567/elm-login.json';
-	return A3(
-		_elm_lang$core$Task$perform,
-		_user$project$Main$FetchFail,
-		_user$project$Main$FetchSucceed,
-		A3(
-			_evancz$elm_http$Http$post,
-			_user$project$Main$decodeLoginResponse,
-			url,
-			_evancz$elm_http$Http$multipart(
-				_elm_lang$core$Native_List.fromArray(
-					[body]))));
-};
-var _user$project$Main$Login = {ctor: 'Login'};
-var _user$project$Main$SetSessionToken = function (a) {
-	return {ctor: 'SetSessionToken', _0: a};
-};
-var _user$project$Main$StopsList = function (a) {
-	return {ctor: 'StopsList', _0: a};
+var _user$project$Main$LoggedIn = function (a) {
+	return {ctor: 'LoggedIn', _0: a};
 };
 var _user$project$Main$init = F2(
-	function (_p0, result) {
-		var _p1 = _p0;
-		var _p4 = _p1._0;
+	function (_p3, result) {
+		var _p4 = _p3;
+		var _p8 = _p4._0;
 		var currentRoute = _user$project$Routing$routeFromResult(result);
-		var _p2 = _user$project$Authenticate$init(
-			A2(_user$project$Authenticate$ActiveUserCreds, _p4, _p1._1));
-		var authenticate = _p2._0;
-		var authenticateMsgs = _p2._1;
-		var _p3 = _user$project$StopsList$init;
-		var list = _p3._0;
-		var listMsgs = _p3._1;
+		var creds = function () {
+			var _p5 = {ctor: '_Tuple2', _0: _p8, _1: _p4._1};
+			if (((_p5.ctor === '_Tuple2') && (_p5._0.ctor === 'Just')) && (_p5._1.ctor === 'Just')) {
+				return _elm_lang$core$Maybe$Just(
+					A2(_user$project$Authenticate$ActiveUserCreds, _p5._0._0, _p5._1._0));
+			} else {
+				return _elm_lang$core$Maybe$Nothing;
+			}
+		}();
+		var _p6 = _user$project$Authenticate$init(creds);
+		var authenticate = _p6._0;
+		var authenticateMsgs = _p6._1;
+		var _p7 = _user$project$LoggedIn$init;
+		var loggedIn = _p7._0;
+		var loggedInMsgs = _p7._1;
 		return {
 			ctor: '_Tuple2',
-			_0: {authentication: authenticate, stopsList: list, route: currentRoute, token: _p4},
+			_0: {authenticate: authenticate, loggedIn: loggedIn, route: currentRoute, token: _p8},
 			_1: _elm_lang$core$Platform_Cmd$batch(
 				_elm_lang$core$Native_List.fromArray(
 					[
-						A2(_elm_lang$core$Platform_Cmd$map, _user$project$Main$StopsList, listMsgs),
+						A2(_elm_lang$core$Platform_Cmd$map, _user$project$Main$LoggedIn, loggedInMsgs),
 						A2(_elm_lang$core$Platform_Cmd$map, _user$project$Main$Authenticate, authenticateMsgs)
 					]))
 		};
 	});
 var _user$project$Main$update = F2(
 	function (msg, model) {
-		var _p5 = msg;
-		switch (_p5.ctor) {
-			case 'StopsList':
-				var _p6 = A2(_user$project$StopsList$update, _p5._0, model.stopsList);
-				var list = _p6._0;
-				var listCmds = _p6._1;
+		var _p9 = msg;
+		if (_p9.ctor === 'LoggedIn') {
+			var _p12 = _p9._0;
+			var _p10 = _p12;
+			if (_p10.ctor === 'Logout') {
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{stopsList: list}),
-					_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$Main$StopsList, listCmds)
+						{loggedIn: _user$project$LoggedIn$emptyModel, authenticate: _user$project$Authenticate$emptyModel, route: _user$project$Routing$LoginRoute}),
+					_1: _elm_lang$core$Platform_Cmd$batch(
+						_elm_lang$core$Native_List.fromArray(
+							[
+								_user$project$Authenticate$setToken(_elm_lang$core$Maybe$Nothing),
+								_user$project$Routing$updateUrl(_user$project$Routing$HomeRoute)
+							]))
 				};
-			case 'SetSessionToken':
-				return {
-					ctor: '_Tuple2',
-					_0: model,
-					_1: _user$project$Main$setToken(_p5._0)
-				};
-			case 'Login':
-				return {
-					ctor: '_Tuple2',
-					_0: model,
-					_1: _user$project$Main$loginEndpoint(model)
-				};
-			case 'Logout':
+			} else {
+				var _p11 = A2(_user$project$LoggedIn$update, _p12, model.loggedIn);
+				var loggedIn = _p11._0;
+				var loggedInCmds = _p11._1;
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{token: _elm_lang$core$Maybe$Nothing}),
-					_1: _user$project$Main$setToken(_elm_lang$core$Maybe$Nothing)
+						{loggedIn: loggedIn}),
+					_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$Main$LoggedIn, loggedInCmds)
 				};
-			case 'FetchFail':
-				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-			case 'FetchSucceed':
-				var _p7 = _p5._0;
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{
-							token: _elm_lang$core$Maybe$Just(_p7)
-						}),
-					_1: _user$project$Main$setToken(
-						_elm_lang$core$Maybe$Just(_p7))
-				};
-			default:
-				var _p8 = A2(_user$project$Authenticate$update, _p5._0, model.authentication);
-				var authenticate = _p8._0;
-				var authenticateCmds = _p8._1;
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{authentication: authenticate}),
-					_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$Main$Authenticate, authenticateCmds)
-				};
+			}
+		} else {
+			var _p13 = A2(_user$project$Authenticate$update, _p9._0, model.authenticate);
+			var authenticate = _p13._0;
+			var authenticateCmds = _p13._1;
+			var newCreds = function () {
+				var _p14 = authenticate.activeUser;
+				if (_p14.ctor === 'Just') {
+					return true;
+				} else {
+					return false;
+				}
+			}();
+			var cmds = newCreds ? _elm_lang$core$Platform_Cmd$batch(
+				_elm_lang$core$Native_List.fromArray(
+					[
+						A2(_elm_lang$core$Platform_Cmd$map, _user$project$Main$Authenticate, authenticateCmds),
+						_user$project$Routing$updateUrl(_user$project$Routing$HomeRoute)
+					])) : A2(_elm_lang$core$Platform_Cmd$map, _user$project$Main$Authenticate, authenticateCmds);
+			return {
+				ctor: '_Tuple2',
+				_0: _elm_lang$core$Native_Utils.update(
+					model,
+					{authenticate: authenticate}),
+				_1: cmds
+			};
 		}
 	});
 var _user$project$Main$view = function (model) {
-	var _p9 = model.route;
-	switch (_p9.ctor) {
+	var _p15 = model.route;
+	switch (_p15.ctor) {
 		case 'LoginRoute':
 			return A2(
-				_elm_lang$html$Html$div,
-				_elm_lang$core$Native_List.fromArray(
-					[]),
-				_elm_lang$core$Native_List.fromArray(
-					[
-						_elm_lang$html$Html$text('Login')
-					]));
+				_elm_lang$html$Html_App$map,
+				function (msg) {
+					return _user$project$Main$Authenticate(msg);
+				},
+				A2(_user$project$Authenticate$view, model.authenticate, _user$project$Authenticate$LoginView));
 		case 'SignupRoute':
 			return A2(
 				_elm_lang$html$Html_App$map,
 				function (msg) {
 					return _user$project$Main$Authenticate(msg);
 				},
-				_user$project$Authenticate$view(model.authentication));
+				A2(_user$project$Authenticate$view, model.authenticate, _user$project$Authenticate$SignupView));
 		case 'HomeRoute':
 			return A2(
 				_elm_lang$html$Html_App$map,
 				function (msg) {
-					return _user$project$Main$StopsList(msg);
+					return _user$project$Main$LoggedIn(msg);
 				},
-				_user$project$StopsList$view(model.stopsList));
+				_user$project$LoggedIn$view(model.loggedIn));
 		default:
 			return A2(
 				_elm_lang$html$Html$div,

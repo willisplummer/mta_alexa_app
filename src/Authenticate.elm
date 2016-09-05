@@ -44,6 +44,11 @@ init creds =
         )
 
 
+emptyModel : Model
+emptyModel =
+    Model Signup.initialModel Login.initialModel Nothing
+
+
 type Msg
     = Signup Signup.Msg
     | Login Login.Msg
@@ -120,6 +125,10 @@ update message model =
             ( { model | activeUser = Nothing }
             , setToken model.activeUser
             )
+
+
+logout model =
+    update Logout model
 
 
 view : Model -> Display -> Html Msg

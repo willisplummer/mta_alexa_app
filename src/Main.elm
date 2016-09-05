@@ -5,7 +5,7 @@ import Authenticate
 import Routing exposing (..)
 import Html exposing (..)
 import Html.App as App
-import StopsList
+import LoggedIn
 
 
 --
@@ -29,8 +29,8 @@ main =
 init : ( Maybe String, Maybe String ) -> Result String Route -> ( Model, Cmd Msg )
 init ( token, email ) result =
     let
-        ( list, listMsgs ) =
-            StopsList.init
+        ( loggedIn, loggedInMsgs ) =
+            LoggedIn.init
 
         creds =
             case ( token, email ) of
@@ -46,16 +46,16 @@ init ( token, email ) result =
         currentRoute =
             routeFromResult result
     in
-        ( { authentication = authenticate, stopsList = list, route = currentRoute, token = token }
+        ( { authenticate = authenticate, loggedIn = loggedIn, route = currentRoute, token = token }
         , Cmd.batch
-            [ Cmd.map StopsList listMsgs
+            [ Cmd.map LoggedIn loggedInMsgs
             , Cmd.map Authenticate authenticateMsgs
             ]
         )
 
 
 
--- urlUpdate
+-- url`
 
 
 urlUpdate : Result String Route -> Model -> ( Model, Cmd Msg )
@@ -63,8 +63,41 @@ urlUpdate result model =
     let
         currentRoute =
             Routing.routeFromResult result
+
+        authenticated =
+            case model.authenticate.activeUser of
+                Just user ->
+                    True
+
+                Nothing ->
+                    False
+
+        newRoute =
+            if authenticated then
+                case currentRoute of
+                    SignupRoute ->
+                        HomeRoute
+
+                    LoginRoute ->
+                        HomeRoute
+
+                    _ ->
+                        currentRoute
+            else
+                case currentRoute of
+                    HomeRoute ->
+                        LoginRoute
+
+                    _ ->
+                        currentRoute
+
+        commands =
+            if newRoute == currentRoute then
+                Cmd.none
+            else
+                (Routing.updateUrl newRoute)
     in
-        ( { model | route = currentRoute }, Cmd.none )
+        ( { model | route = newRoute }, commands )
 
 
 
@@ -72,8 +105,8 @@ urlUpdate result model =
 
 
 type alias Model =
-    { authentication : Authenticate.Model
-    , stopsList : StopsList.Model
+    { authenticate : Authenticate.Model
+    , loggedIn : LoggedIn.Model
     , route : Routing.Route
     , token : Maybe String
     }
@@ -99,29 +132,60 @@ subscriptions model =
 
 
 type Msg
-    = StopsList StopsList.Msg
+    = LoggedIn LoggedIn.Msg
     | Authenticate Authenticate.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        StopsList subMsg ->
-            let
-                ( list, listCmds ) =
-                    StopsList.update subMsg model.stopsList
-            in
-                ( { model | stopsList = list }
-                , Cmd.map StopsList listCmds
-                )
+        LoggedIn subMsg ->
+            case subMsg of
+                LoggedIn.Logout ->
+                    ( { model
+                        | loggedIn = LoggedIn.emptyModel
+                        , authenticate = Authenticate.emptyModel
+                        , route = LoginRoute
+                      }
+                    , Cmd.batch
+                        [ Authenticate.setToken Nothing
+                        , Routing.updateUrl HomeRoute
+                        ]
+                    )
+
+                _ ->
+                    let
+                        ( loggedIn, loggedInCmds ) =
+                            LoggedIn.update subMsg model.loggedIn
+                    in
+                        ( { model | loggedIn = loggedIn }
+                        , Cmd.map LoggedIn loggedInCmds
+                        )
 
         Authenticate subMsg ->
             let
                 ( authenticate, authenticateCmds ) =
-                    Authenticate.update subMsg model.authentication
+                    Authenticate.update subMsg model.authenticate
+
+                newCreds =
+                    case authenticate.activeUser of
+                        Just creds ->
+                            True
+
+                        Nothing ->
+                            False
+
+                cmds =
+                    if newCreds then
+                        Cmd.batch
+                            [ Cmd.map Authenticate authenticateCmds
+                            , Routing.updateUrl HomeRoute
+                            ]
+                    else
+                        Cmd.map Authenticate authenticateCmds
             in
-                ( { model | authentication = authenticate }
-                , Cmd.map Authenticate authenticateCmds
+                ( { model | authenticate = authenticate }
+                , cmds
                 )
 
 
@@ -135,17 +199,17 @@ view model =
         LoginRoute ->
             App.map
                 (\msg -> Authenticate msg)
-                (Authenticate.view model.authentication Authenticate.LoginView)
+                (Authenticate.view model.authenticate Authenticate.LoginView)
 
         SignupRoute ->
             App.map
                 (\msg -> Authenticate msg)
-                (Authenticate.view model.authentication Authenticate.SignupView)
+                (Authenticate.view model.authenticate Authenticate.SignupView)
 
         HomeRoute ->
             App.map
-                (\msg -> StopsList msg)
-                (StopsList.view model.stopsList)
+                (\msg -> LoggedIn msg)
+                (LoggedIn.view model.loggedIn)
 
         NotFoundRoute ->
             div [] [ text "NOT FOUND" ]

@@ -42,3 +42,24 @@ routeFromResult result =
 
         Err string ->
             NotFoundRoute
+
+
+toUrl : Route -> String
+toUrl route =
+    case route of
+        LoginRoute ->
+            "#login"
+
+        SignupRoute ->
+            "#signup"
+
+        HomeRoute ->
+            "#home"
+
+        NotFoundRoute ->
+            "#notfound"
+
+
+updateUrl : Route -> Cmd msg
+updateUrl route =
+    Navigation.newUrl (toUrl route)
