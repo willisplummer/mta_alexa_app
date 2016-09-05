@@ -18,15 +18,12 @@ var app = Elm.Main.fullscreen(tuple);
 
 app.ports.setToken.subscribe(function(credsHash) {
   if (credsHash == null ) {
-    return
+    sessionStorage.removeItem(tokenKey);
+    sessionStorage.removeItem(emailKey)
   }
   else if (credsHash["token"] && credsHash["email"]) {
     sessionStorage.setItem(tokenKey, credsHash["token"]);
     sessionStorage.setItem(emailKey, credsHash["email"]);
-  }
-  else {
-    sessionStorage.removeItem(tokenKey);
-    sessionStorage.removeItem(emailKey)
   }
 });
 

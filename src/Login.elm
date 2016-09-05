@@ -4,8 +4,7 @@ import Html exposing (..)
 import Html.Attributes exposing (href, type', placeholder, class, style)
 import Html.Events exposing (onInput, onClick)
 import Http
-import Json.Decode as Json exposing ((:=))
-import Json.Encode as JS
+import API
 import Task
 import String exposing (isEmpty)
 import List exposing (map, concat, concatMap)
@@ -80,7 +79,7 @@ update msg model =
 
                 cmd =
                     if isValid newModel then
-                        submitData newModel
+                        Task.perform FetchFail FetchSucceed (API.submitLoginData ( newModel.email, newModel.password ))
                     else
                         Cmd.none
             in
@@ -130,41 +129,6 @@ validate model =
 isValid : Model -> Bool
 isValid model =
     model.errors.email == Nothing && model.errors.password == Nothing
-
-
-
--- HTTP
-
-
-submitData : Model -> Cmd Msg
-submitData model =
-    let
-        url =
-            "http://localhost:4567/elm-login.json"
-
-        body =
-            Http.stringData "user"
-                (JS.encode 0
-                    (JS.object
-                        [ ( "email", JS.string model.email )
-                        , ( "pw", JS.string model.password )
-                        ]
-                    )
-                )
-    in
-        Task.perform FetchFail FetchSucceed (Http.post decodeLoginResponse url (Http.multipart [ body ]))
-
-
-decodeLoginResponse : Json.Decoder ( Maybe String, Maybe String )
-decodeLoginResponse =
-    Json.object2 (,)
-        (Json.maybe
-            ("token" := Json.string)
-        )
-        (Json.maybe
-            ("errors" := Json.string)
-        )
-
 
 
 -- VIEW

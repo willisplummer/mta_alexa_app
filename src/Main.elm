@@ -2,10 +2,11 @@ module Main exposing (..)
 
 import Navigation
 import Authenticate
+import LoggedIn
+import API
 import Routing exposing (..)
 import Html exposing (..)
 import Html.App as App
-import LoggedIn
 
 
 --

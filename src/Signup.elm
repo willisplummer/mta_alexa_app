@@ -4,11 +4,10 @@ import Html exposing (..)
 import Html.Attributes exposing (href, type', placeholder, class, style)
 import Html.Events exposing (onInput, onClick)
 import Http
-import Json.Decode as Json exposing ((:=))
-import Json.Encode as JS
 import Task
 import String exposing (isEmpty)
 import List exposing (map, concat, concatMap)
+import API
 
 
 -- MODEL
@@ -89,7 +88,7 @@ update msg model =
 
                 cmd =
                     if isValid newModel then
-                        submitData newModel
+                        Task.perform FetchFail FetchSucceed (API.submitSignupData (newModel.email, newModel.password, newModel.passwordAgain))
                     else
                         Cmd.none
             in
@@ -143,40 +142,6 @@ validate model =
 isValid : Model -> Bool
 isValid model =
     model.errors.email == Nothing && model.errors.password == Nothing
-
-
-
--- HTTP
-
-
-submitData : Model -> Cmd Msg
-submitData model =
-    let
-        url =
-            "http://localhost:4567/elm-signup.json"
-
-        body =
-            Http.stringData "user"
-                (JS.encode 0
-                    (JS.object
-                        [ ( "email", JS.string model.email )
-                        , ( "pw", JS.string model.password )
-                        , ( "pw2", JS.string model.passwordAgain )
-                        ]
-                    )
-                )
-    in
-        Task.perform FetchFail FetchSucceed (Http.post decodeSignUpResponse url (Http.multipart [ body ]))
-
-
-decodeSignUpResponse : Json.Decoder ( Maybe String, List String )
-decodeSignUpResponse =
-    Json.object2 (,)
-        (Json.maybe
-            ("token" := Json.string)
-        )
-        ("errors" := Json.list Json.string)
-
 
 
 -- VIEW
