@@ -4,7 +4,6 @@ import StopsList exposing (..)
 import Html exposing (Html, div, button, text)
 import Html.App as App
 import Html.Events exposing (onClick)
-import Authenticate
 
 
 type alias Model =
