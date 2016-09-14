@@ -1,8 +1,6 @@
 port module Authenticate exposing (..)
 
-import Signup
 import Html exposing (div, Html, text, a, button, input)
-import Html.App as App
 import Html.Attributes exposing (href, type', placeholder, class, style)
 import Html.Events exposing (onInput, onClick)
 import Http
@@ -13,7 +11,7 @@ import List exposing (map, concat, concatMap)
 
 
 type alias Model =
-    { signup : Signup.Model
+    { signup : SignupModel
     , login : LoginModel
     , activeUser : Maybe ActiveUserCreds
     }
@@ -54,33 +52,59 @@ initialLoginModel =
     LoginModel "" "" initialLoginErrors
 
 
+type alias SignupModel =
+    { email : String
+    , password : String
+    , passwordAgain : String
+    , errors : SignupErrors
+    }
+
+
+type alias SignupErrors =
+    { email : Maybe String
+    , password : Maybe String
+    , server : List String
+    }
+
+
+initialSignupErrors : SignupErrors
+initialSignupErrors =
+    SignupErrors Nothing Nothing []
+
+
+initialSignupModel : SignupModel
+initialSignupModel =
+    SignupModel "" "" "" initialSignupErrors
+
+
 init : Maybe ActiveUserCreds -> ( Model, Cmd Msg )
 init creds =
-    let
-        ( signupModel, signupMsgs ) =
-            Signup.init
-    in
-        ( { signup = signupModel
-          , login = initialLoginModel
-          , activeUser = creds
-          }
-        , Cmd.map Signup signupMsgs
-        )
+    ( { signup = initialSignupModel
+      , login = initialLoginModel
+      , activeUser = creds
+      }
+    , Cmd.none
+    )
 
 
 emptyModel : Model
 emptyModel =
-    Model Signup.initialModel initialLoginModel Nothing
+    Model initialSignupModel initialLoginModel Nothing
 
 
 type Msg
-    = Signup Signup.Msg
-    | Logout
+    = Logout
     | LoginEmail String
     | LoginPassword String
     | LoginValidate
     | LoginFetchSucceed ( Maybe String, Maybe String )
     | LoginFetchFail Http.Error
+    | SignupEmail String
+    | SignupPassword String
+    | SignupPasswordAgain String
+    | SignupValidate
+    | SignupFetchSucceed ( Maybe String, List String )
+    | SignupFetchFail Http.Error
 
 
 port setToken : Maybe ActiveUserCreds -> Cmd msg
@@ -89,36 +113,6 @@ port setToken : Maybe ActiveUserCreds -> Cmd msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update message model =
     case message of
-        Signup subMsg ->
-            let
-                ( signup, signupCmds ) =
-                    Signup.update subMsg model.signup
-
-                creds =
-                    case signup.token of
-                        Just token ->
-                            Just { token = token, email = signup.email }
-
-                        Nothing ->
-                            Nothing
-
-                response =
-                    case subMsg of
-                        Signup.FetchSucceed arguments ->
-                            ( { model | signup = signup, activeUser = creds }
-                            , Cmd.batch
-                                [ Cmd.map Signup signupCmds
-                                , setToken creds
-                                ]
-                            )
-
-                        _ ->
-                            ( { model | signup = signup }
-                            , Cmd.map Signup signupCmds
-                            )
-            in
-                response
-
         LoginEmail email ->
             let
                 oldLogin =
@@ -203,6 +197,104 @@ update message model =
                 , Cmd.none
                 )
 
+        SignupEmail email ->
+            let
+                oldSignup =
+                    model.signup
+
+                newSignup =
+                    { oldSignup | email = email }
+            in
+                ( { model
+                    | signup = newSignup
+                  }
+                , Cmd.none
+                )
+
+        SignupPassword password ->
+            let
+                oldSignup =
+                    model.signup
+
+                newSignup =
+                    { oldSignup | password = password }
+            in
+                ( { model
+                    | signup = newSignup
+                  }
+                , Cmd.none
+                )
+
+        SignupPasswordAgain passwordAgain ->
+            let
+                oldSignup =
+                    model.signup
+
+                newSignup =
+                    { oldSignup | passwordAgain = passwordAgain }
+            in
+                ( { model
+                    | signup = newSignup
+                  }
+                , Cmd.none
+                )
+
+        SignupValidate ->
+            let
+                newSignup =
+                    validateSignup model.signup
+
+                newModel =
+                    { model | signup = newSignup }
+
+                cmd =
+                    if signupIsValid newSignup then
+                        Task.perform SignupFetchFail SignupFetchSucceed (API.submitSignupData ( newSignup.email, newSignup.password, newSignup.passwordAgain ))
+                    else
+                        Cmd.none
+            in
+                ( newModel
+                , cmd
+                )
+
+        SignupFetchSucceed ( token, errors ) ->
+            let
+                oldSignup =
+                    model.signup
+
+                newSignup =
+                    { oldSignup | errors = SignupErrors Nothing Nothing errors }
+
+                activeUserResponse =
+                    case token of
+                        Just token ->
+                            Just { token = token, email = newSignup.email }
+
+                        Nothing ->
+                            Nothing
+            in
+                ( { model
+                    | activeUser = activeUserResponse
+                    , signup = newSignup
+                  }
+                , Cmd.none
+                )
+
+        SignupFetchFail token ->
+            let
+                oldSignup =
+                    model.signup
+
+                newSignup =
+                    { oldSignup | errors = SignupErrors Nothing Nothing [ "there was a problem connecting to the server. please try again." ] }
+            in
+                ( { model
+                    | activeUser = Nothing
+                    , signup = newSignup
+                  }
+                , Cmd.none
+                )
+
         Logout ->
             ( { model | activeUser = Nothing }
             , setToken model.activeUser
@@ -245,11 +337,89 @@ loginIsValid login =
 -- VIEW
 
 
-loginView : Model -> Html Msg
-loginView model =
+validateSignup : SignupModel -> SignupModel
+validateSignup model =
+    let
+        newErrors =
+            { email =
+                if isEmpty model.email then
+                    Just "Enter an email address!"
+                    -- TO DO: Validate email format
+                else
+                    Nothing
+            , password =
+                if isEmpty model.password then
+                    Just "Enter a password!"
+                else if isEmpty model.passwordAgain then
+                    Just "Please re-enter your password!"
+                else if model.password /= model.passwordAgain then
+                    Just "Passwords don't match"
+                else
+                    Nothing
+            , server =
+                []
+            }
+    in
+        { model | errors = newErrors }
+
+
+signupIsValid : SignupModel -> Bool
+signupIsValid signupModel =
+    signupModel.errors.email == Nothing && signupModel.errors.password == Nothing
+
+
+
+-- VIEW
+
+
+signupView : SignupModel -> Html Msg
+signupView model =
     let
         serverErrors =
-            case model.login.errors.server of
+            if List.isEmpty model.errors.server then
+                []
+            else
+                [ div [ class "validation-error", style [ ( "color", "red " ) ] ]
+                    (List.map (\str -> text str) model.errors.server)
+                ]
+
+        body =
+            validatedSignupInput [ ( "Email", "text", SignupEmail ) ] model.errors.email
+                ++ validatedSignupInput [ ( "Password", "password", SignupPassword ), ( "Re-enter Password", "password", SignupPasswordAgain ) ] model.errors.password
+                ++ [ button [ onClick SignupValidate ] [ text "Submit" ]
+                   ]
+                ++ serverErrors
+                ++ [ div []
+                        [ text "already have an account? you can always just "
+                        , a [ href "#login" ] [ text "login" ]
+                        ]
+                   ]
+    in
+        div [] body
+
+
+validatedSignupInput : List ( String, String, String -> Msg ) -> Maybe String -> List (Html Msg)
+validatedSignupInput list error =
+    let
+        inputFields =
+            concatMap (\( a, b, c ) -> [ input [ type' b, placeholder a, onInput c ] [] ]) list
+
+        errorFields =
+            case error of
+                Just msg ->
+                    [ div [ class "validation-error", style [ ( "color", "red" ) ] ] [ text msg ] ]
+
+                Nothing ->
+                    []
+    in
+        inputFields ++ errorFields
+
+
+loginView : LoginModel -> Html Msg
+loginView loginModel =
+    let
+        serverErrors =
+            case loginModel.errors.server of
                 Just error ->
                     [ div [ class "validation-error", style [ ( "color", "red " ) ] ]
                         [ text error ]
@@ -259,8 +429,8 @@ loginView model =
                     []
 
         body =
-            validatedLoginInput [ ( "Email", "text", LoginEmail ) ] model.login.errors.email
-                ++ validatedLoginInput [ ( "Password", "password", LoginPassword ) ] model.login.errors.password
+            validatedLoginInput [ ( "Email", "text", LoginEmail ) ] loginModel.errors.email
+                ++ validatedLoginInput [ ( "Password", "password", LoginPassword ) ] loginModel.errors.password
                 ++ [ button [ onClick LoginValidate ] [ text "Submit" ]
                    ]
                 ++ serverErrors
@@ -294,9 +464,7 @@ view : Model -> Display -> Html Msg
 view model view =
     case view of
         SignupView ->
-            div []
-                [ App.map Signup (Signup.view model.signup)
-                ]
+            signupView model.signup
 
         LoginView ->
-            loginView model
+            loginView model.login
