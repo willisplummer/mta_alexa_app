@@ -1,14 +1,20 @@
 port module Authenticate exposing (..)
 
 import Signup
-import Login
-import Html exposing (div, Html)
+import Html exposing (div, Html, text, a, button, input)
 import Html.App as App
+import Html.Attributes exposing (href, type', placeholder, class, style)
+import Html.Events exposing (onInput, onClick)
+import Http
+import API
+import Task
+import String exposing (isEmpty)
+import List exposing (map, concat, concatMap)
 
 
 type alias Model =
     { signup : Signup.Model
-    , login : Login.Model
+    , login : LoginModel
     , activeUser : Maybe ActiveUserCreds
     }
 
@@ -24,35 +30,57 @@ type alias ActiveUserCreds =
     }
 
 
+type alias LoginModel =
+    { email : String
+    , password : String
+    , errors : LoginErrors
+    }
+
+
+type alias LoginErrors =
+    { email : Maybe String
+    , password : Maybe String
+    , server : Maybe String
+    }
+
+
+initialLoginErrors : LoginErrors
+initialLoginErrors =
+    LoginErrors Nothing Nothing Nothing
+
+
+initialLoginModel : LoginModel
+initialLoginModel =
+    LoginModel "" "" initialLoginErrors
+
+
 init : Maybe ActiveUserCreds -> ( Model, Cmd Msg )
 init creds =
     let
         ( signupModel, signupMsgs ) =
             Signup.init
-
-        ( loginModel, loginMsgs ) =
-            Login.init
     in
         ( { signup = signupModel
-          , login = Login.initialModel
+          , login = initialLoginModel
           , activeUser = creds
           }
-        , Cmd.batch
-            [ Cmd.map Signup signupMsgs
-            , Cmd.map Login Cmd.none
-            ]
+        , Cmd.map Signup signupMsgs
         )
 
 
 emptyModel : Model
 emptyModel =
-    Model Signup.initialModel Login.initialModel Nothing
+    Model Signup.initialModel initialLoginModel Nothing
 
 
 type Msg
     = Signup Signup.Msg
-    | Login Login.Msg
     | Logout
+    | LoginEmail String
+    | LoginPassword String
+    | LoginValidate
+    | LoginFetchSucceed ( Maybe String, Maybe String )
+    | LoginFetchFail Http.Error
 
 
 port setToken : Maybe ActiveUserCreds -> Cmd msg
@@ -91,35 +119,89 @@ update message model =
             in
                 response
 
-        Login subMsg ->
+        LoginEmail email ->
             let
-                ( login, loginCmds ) =
-                    Login.update subMsg model.login
+                oldLogin =
+                    model.login
 
-                creds =
-                    case login.token of
+                newLogin =
+                    { oldLogin | email = email }
+            in
+                ( { model
+                    | login = newLogin
+                  }
+                , Cmd.none
+                )
+
+        LoginPassword password ->
+            let
+                oldLogin =
+                    model.login
+
+                newLogin =
+                    { oldLogin | password = password }
+            in
+                ( { model
+                    | login = newLogin
+                  }
+                , Cmd.none
+                )
+
+        LoginValidate ->
+            let
+                newLogin =
+                    validateLogin model.login
+
+                newModel =
+                    { model | login = newLogin }
+
+                cmd =
+                    if loginIsValid newLogin then
+                        Task.perform LoginFetchFail LoginFetchSucceed (API.submitLoginData ( newLogin.email, newLogin.password ))
+                    else
+                        Cmd.none
+            in
+                ( newModel
+                , cmd
+                )
+
+        LoginFetchSucceed ( token, errors ) ->
+            let
+                oldLogin =
+                    model.login
+
+                newLogin =
+                    { oldLogin | errors = LoginErrors Nothing Nothing errors }
+
+                activeUserResponse =
+                    case token of
                         Just token ->
-                            Just { token = token, email = login.email }
+                            Just { token = token, email = newLogin.email }
 
                         Nothing ->
                             Nothing
-
-                response =
-                    case subMsg of
-                        Login.FetchSucceed arguments ->
-                            ( { model | login = login, activeUser = creds }
-                            , Cmd.batch
-                                [ Cmd.map Login loginCmds
-                                , setToken creds
-                                ]
-                            )
-
-                        _ ->
-                            ( { model | login = login }
-                            , Cmd.map Login loginCmds
-                            )
             in
-                response
+                ( { model
+                    | activeUser = activeUserResponse
+                    , login = newLogin
+                  }
+                , Cmd.none
+                )
+
+        LoginFetchFail token ->
+            let
+                oldLogin =
+                    model.login
+
+                newLogin =
+                    { oldLogin | errors = LoginErrors Nothing Nothing (Just "there was a problem connecting to the server. please try again.") }
+            in
+                ( { model
+                    | activeUser = Nothing
+                    , login = newLogin
+                  }
+                , Cmd.none
+                )
 
         Logout ->
             ( { model | activeUser = Nothing }
@@ -127,8 +209,85 @@ update message model =
             )
 
 
+logout : Model -> ( Model, Cmd Msg )
 logout model =
     update Logout model
+
+
+validateLogin : LoginModel -> LoginModel
+validateLogin login =
+    let
+        newErrors =
+            { email =
+                if isEmpty login.email then
+                    Just "Enter an email address"
+                    -- TO DO: Validate email format
+                else
+                    Nothing
+            , password =
+                if isEmpty login.password then
+                    Just "Enter your password!"
+                else
+                    Nothing
+            , server =
+                Nothing
+            }
+    in
+        { login | errors = newErrors }
+
+
+loginIsValid : LoginModel -> Bool
+loginIsValid login =
+    login.errors.email == Nothing && login.errors.password == Nothing
+
+
+
+-- VIEW
+
+
+loginView : Model -> Html Msg
+loginView model =
+    let
+        serverErrors =
+            case model.login.errors.server of
+                Just error ->
+                    [ div [ class "validation-error", style [ ( "color", "red " ) ] ]
+                        [ text error ]
+                    ]
+
+                Nothing ->
+                    []
+
+        body =
+            validatedLoginInput [ ( "Email", "text", LoginEmail ) ] model.login.errors.email
+                ++ validatedLoginInput [ ( "Password", "password", LoginPassword ) ] model.login.errors.password
+                ++ [ button [ onClick LoginValidate ] [ text "Submit" ]
+                   ]
+                ++ serverErrors
+                ++ [ div []
+                        [ text "want to create an account? you can always just "
+                        , a [ href "#signup" ] [ text "signup" ]
+                        ]
+                   ]
+    in
+        div [] body
+
+
+validatedLoginInput : List ( String, String, String -> Msg ) -> Maybe String -> List (Html Msg)
+validatedLoginInput list error =
+    let
+        inputFields =
+            concatMap (\( a, b, c ) -> [ input [ type' b, placeholder a, onInput c ] [] ]) list
+
+        errorFields =
+            case error of
+                Just msg ->
+                    [ div [ class "validation-error", style [ ( "color", "red" ) ] ] [ text msg ] ]
+
+                Nothing ->
+                    []
+    in
+        inputFields ++ errorFields
 
 
 view : Model -> Display -> Html Msg
@@ -140,6 +299,4 @@ view model view =
                 ]
 
         LoginView ->
-            div []
-                [ App.map Login (Login.view model.login)
-                ]
+            loginView model
