@@ -10,7 +10,6 @@ import String exposing (isEmpty)
 import List exposing (map, concat, concatMap)
 import Navigation
 import LoggedIn
-import API
 import Routing exposing (..)
 import Html.App as App
 
