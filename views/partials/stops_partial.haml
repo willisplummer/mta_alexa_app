@@ -1,4 +1,4 @@
-%form{action: "addstop", method: "post", id:"activateform", onsubmit: "return validateForm(this)"}
+%form{action: "addstop", method: "post", id:"activateform", onsubmit: "return validateNewStopForm(this)"}
   %fieldset
     %ul
       %li
@@ -21,6 +21,6 @@
         %br
 
 :javascript
-  function validateForm(form) {
+  function validateNewStopForm(form) {
     return true;
   }

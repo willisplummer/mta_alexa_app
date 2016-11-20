@@ -1,11 +1,11 @@
 %h1 Logged In
 %p
   Currently logged in as
-  = locals[:email]
+  = @user.email
 
 %h2 Your Devices:
-= "You don't have any devices connected to this account yet" if devices.length == 0
-- devices.each do |d|
+= "You don't have any devices connected to this account yet" if @devices.length == 0
+- @devices.each do |d|
   %li
     = d.alexa_user_id
     = haml :'partials/delete_device', locals: {device_id: d.id}
@@ -15,14 +15,15 @@
 = haml :'partials/activate_form_partial', locals: locals
 
 %h2 Your Stops:
-= "You don't have any stops connected to this account yet" if stops.length == 0
+= "You don't have any stops connected to this account yet" if @stops.length == 0
 %ol
-  - stops.sort_by{|s| s.id}.each do |s|
+  - @stops.sort_by{|s| s.id}.each do |s|
     %li
-      = "#{s.name} (MTA Stop ID: #{s.mta_stop_id})"
-      = "(default)" if s.id == locals[:default_stop_id]
+      %p{id: "stop #{s.id}"}
+        = "#{s.name} (MTA Stop ID: #{s.mta_stop_id})"
+        = "(default)" if s.id == @default_stop.id
       = haml :'partials/delete_stop', locals: {stop_id: s.id}
-      = haml :'partials/make_stop_default', locals: {stop_id: s.id} unless s.id == locals[:default_stop_id]
+      = haml :'partials/make_stop_default', locals: {stop_id: s.id} unless s.id == @default_stop.id
 
 %h3 Add a new stop:
 / NOTE: very important to pass in all the locals when loading a partial

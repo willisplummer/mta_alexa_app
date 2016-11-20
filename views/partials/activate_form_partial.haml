@@ -1,4 +1,4 @@
-%form{action: "activate", method: "post", id:"activateform", onsubmit: "return validateForm(this)"}
+%form{action: "activate", method: "post", id:"activateform", onsubmit: "return validateActivationForm(this)"}
   %fieldset
     %ul
       %li
@@ -15,7 +15,7 @@
         %br
 
 :javascript
-  function validateForm(form) {
+  function validateActivationForm(form) {
     var errors = [];
     errors.push(validateCodeLength(form));
     var filteredErrors = errors.filter(notNull);

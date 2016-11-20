@@ -1,0 +1,30 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title> Elm Bus App </title>
+    <script type="text/javascript" src="elm.js"></script>
+  </head>
+
+  <body>
+    <script type="text/javascript">
+      var token = sessionStorage.token || null;
+      var email = sessionStorage.email || null;
+      var tuple = [token, email]
+      var tokenKey = "token";
+      var emailKey = "email";
+      var app = Elm.Main.fullscreen(tuple);
+
+      app.ports.setToken.subscribe(function(credsHash) {
+        if (credsHash == null ) {
+          sessionStorage.removeItem(tokenKey);
+          sessionStorage.removeItem(emailKey)
+        }
+        else if (credsHash["token"] && credsHash["email"]) {
+          sessionStorage.setItem(tokenKey, credsHash["token"]);
+          sessionStorage.setItem(emailKey, credsHash["email"]);
+        }
+      });
+    </script>
+  </body>
+</html>
